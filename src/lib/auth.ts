@@ -2,7 +2,7 @@ import { env } from "#/env";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
-import { db } from "#/db"; // your drizzle instance
+import { db } from "#/db";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "sqlite" }),
