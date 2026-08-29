@@ -1,5 +1,6 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import { authClient } from "#/lib/auth-client";
+import { anyUserExists } from "#/lib/user-server";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Card } from "#/components/pouf/surface";
@@ -11,6 +12,9 @@ import { Blob } from "#/components/pouf/media";
 import { EMAIL_RE } from "#/lib/constants";
 
 export const Route = createFileRoute("/register")({
+  beforeLoad: async () => {
+    if (await anyUserExists()) throw redirect({ href: "/login" });
+  },
   component: Register,
 });
 

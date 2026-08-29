@@ -11,8 +11,10 @@ import { Separator } from "#/components/pouf/separator";
 import { Blob } from "#/components/pouf/media";
 import { authClient } from "#/lib/auth-client";
 import { EMAIL_RE } from "#/lib/constants";
+import { anyUserExists } from "#/lib/user-server";
 
 export const Route = createFileRoute("/login")({
+  loader: async () => ({ hasUser: await anyUserExists() }),
   component: Login,
 });
 
@@ -24,6 +26,7 @@ interface LoginValues {
 const DEFAULT_VALUES: LoginValues = { email: "", password: "" };
 
 export function Login() {
+  const { hasUser } = Route.useLoaderData();
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const {
@@ -188,14 +191,16 @@ export function Login() {
               <Button block variant="quiet" onClick={signInWithGitHub}>
                 Continue with GitHub
               </Button>
-              <Row justify="center">
-                <Text size="sm" muted>
-                  New here?{" "}
-                  <a href="/register" className="underline">
-                    Create an account
-                  </a>
-                </Text>
-              </Row>
+              {hasUser ? null : (
+                <Row justify="center">
+                  <Text size="sm" muted>
+                    New here?{" "}
+                    <a href="/register" className="underline">
+                      Create an account
+                    </a>
+                  </Text>
+                </Row>
+              )}
             </Stack>
           </Card>
         </form>
