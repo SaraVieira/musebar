@@ -51,7 +51,6 @@ export function EmbedNodeView({
   );
 }
 
-// Return an embeddable URL if the given URL is a supported service.
 export function detectEmbed(
   url: string,
 ): { src: string; w: number; h: number } | null {

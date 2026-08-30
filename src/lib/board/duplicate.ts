@@ -1,16 +1,15 @@
-import type { Node } from "@xyflow/react";
+import type { Edge, Node } from "@xyflow/react";
 
 const OFFSET = 24;
 
-// Return a deep-cloned version of the given nodes with fresh IDs and a
-// small positional offset. Preserves parent relationships when the parent
-// itself is being duplicated (remaps to the new parent id); otherwise
-// detaches the child from its old parent so the clone stays in world space.
-export function duplicateNodes(nodes: Node[]): Node[] {
+export function duplicateNodes(
+  nodes: Node[],
+  edges: Edge[] = [],
+): { nodes: Node[]; edges: Edge[] } {
   const idMap = new Map<string, string>();
   nodes.forEach((n) => idMap.set(n.id, crypto.randomUUID()));
 
-  return nodes.map((n) => {
+  const clonedNodes = nodes.map((n) => {
     const newId = idMap.get(n.id)!;
     const newParent = n.parentId ? idMap.get(n.parentId) : undefined;
     return {
@@ -25,4 +24,16 @@ export function duplicateNodes(nodes: Node[]): Node[] {
       data: structuredClone(n.data),
     };
   });
+
+  const clonedEdges = edges
+    .filter((e) => idMap.has(e.source) && idMap.has(e.target))
+    .map((e) => ({
+      ...e,
+      id: crypto.randomUUID(),
+      source: idMap.get(e.source)!,
+      target: idMap.get(e.target)!,
+      selected: true,
+    }));
+
+  return { nodes: clonedNodes, edges: clonedEdges };
 }

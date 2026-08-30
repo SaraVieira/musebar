@@ -12,8 +12,10 @@ import {
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
+  type Node,
   type NodeTypes,
 } from "@xyflow/react";
+import type { Edge } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { ArrowLeft, Redo2, Undo2 } from "lucide-react";
 import { BoardHistoryProvider } from "#/lib/board/history-context";
@@ -23,6 +25,10 @@ import {
   NodeContextMenu,
   type NodeContextMenuState,
 } from "#/components/board/node-context-menu";
+import {
+  PaneContextMenu,
+  type PaneContextMenuState,
+} from "#/components/board/pane-context-menu";
 import { UrlDialog } from "#/components/board/url-dialog";
 import { BookmarkNodeView } from "#/components/board/bookmark-node";
 import { EmbedNodeView } from "#/components/board/embed-node";
@@ -88,6 +94,12 @@ function Board() {
   const [contextMenu, setContextMenu] = useState<NodeContextMenuState | null>(
     null,
   );
+  const [paneMenu, setPaneMenu] = useState<PaneContextMenuState | null>(null);
+  const preDragSnapshot = useRef<{
+    nodes: Node[];
+    edges: Edge[];
+    positions: Map<string, { x: number; y: number }>;
+  } | null>(null);
   const {
     nodes,
     edges,
@@ -128,14 +140,30 @@ function Board() {
     },
     [history, rawAddFiles],
   );
+  // Skip the commit if the drag didn't actually move anything (a click on a
+  // node still fires drag start/stop), so undo doesn't get no-op entries.
   const onNodeDragStart = useCallback(() => {
-    history.commit();
+    const snap = history.snapshot();
+    const positions = new Map(snap.nodes.map((n) => [n.id, { ...n.position }]));
+    preDragSnapshot.current = { ...snap, positions };
   }, [history]);
   const onNodeDragStop = useCallback<typeof rawOnNodeDragStop>(
     (e, node, ns) => {
+      const before = preDragSnapshot.current;
+      preDragSnapshot.current = null;
+      if (before) {
+        const after = rf.getNodes();
+        const moved = after.some((n) => {
+          const p = before.positions.get(n.id);
+          return p && (p.x !== n.position.x || p.y !== n.position.y);
+        });
+        if (moved) {
+          history.commitSnapshot({ nodes: before.nodes, edges: before.edges });
+        }
+      }
       rawOnNodeDragStop(e, node, ns);
     },
-    [rawOnNodeDragStop],
+    [history, rf, rawOnNodeDragStop],
   );
   const onConnectWithHistory = useCallback<typeof onConnect>(
     (params) => {
@@ -145,24 +173,40 @@ function Board() {
     [history, onConnect],
   );
 
-  const addNote = useCallback(() => {
-    history.commit();
-    setNodes((ns) => [...ns, makeNoteNode(boardCenter())]);
-  }, [history, boardCenter, setNodes]);
-  const addTodo = useCallback(() => {
-    history.commit();
-    setNodes((ns) => [...ns, makeTodoNode(boardCenter())]);
-  }, [history, boardCenter, setNodes]);
-  const addText = useCallback(() => {
-    history.commit();
-    setNodes((ns) => [...ns, makeTextNode(boardCenter())]);
-  }, [history, boardCenter, setNodes]);
-  const addFrame = useCallback(() => {
-    history.commit();
-    setNodes((ns) => [makeFrameNode(boardCenter()), ...ns]);
-  }, [history, boardCenter, setNodes]);
+  const addNoteAt = useCallback(
+    (at: { x: number; y: number }) => {
+      history.commit();
+      setNodes((ns) => [...ns, makeNoteNode(at)]);
+    },
+    [history, setNodes],
+  );
+  const addTodoAt = useCallback(
+    (at: { x: number; y: number }) => {
+      history.commit();
+      setNodes((ns) => [...ns, makeTodoNode(at)]);
+    },
+    [history, setNodes],
+  );
+  const addTextAt = useCallback(
+    (at: { x: number; y: number }) => {
+      history.commit();
+      setNodes((ns) => [...ns, makeTextNode(at)]);
+    },
+    [history, setNodes],
+  );
+  const addFrameAt = useCallback(
+    (at: { x: number; y: number }) => {
+      history.commit();
+      setNodes((ns) => [makeFrameNode(at), ...ns]);
+    },
+    [history, setNodes],
+  );
 
-  // Duplicate the current selection (or a specific node if provided).
+  const addNote = useCallback(() => addNoteAt(boardCenter()), [addNoteAt, boardCenter]);
+  const addTodo = useCallback(() => addTodoAt(boardCenter()), [addTodoAt, boardCenter]);
+  const addText = useCallback(() => addTextAt(boardCenter()), [addTextAt, boardCenter]);
+  const addFrame = useCallback(() => addFrameAt(boardCenter()), [addFrameAt, boardCenter]);
+
   const duplicate = useCallback(
     (nodeId?: string) => {
       const source = nodeId
@@ -170,16 +214,22 @@ function Board() {
         : rf.getNodes().filter((n) => n.selected);
       if (source.length === 0) return;
       history.commit();
-      const clones = duplicateNodes(source);
+      const sourceEdges = rf.getEdges();
+      const clones = duplicateNodes(source, sourceEdges);
       setNodes((ns) => [
         ...ns.map((n) => ({ ...n, selected: false })),
-        ...clones,
+        ...clones.nodes,
       ]);
+      if (clones.edges.length > 0) {
+        setEdges((es) => [
+          ...es.map((e) => ({ ...e, selected: false })),
+          ...clones.edges,
+        ]);
+      }
     },
-    [rf, history, setNodes],
+    [rf, history, setNodes, setEdges],
   );
 
-  // Cmd/Ctrl+D duplicates the current selection.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (!(e.metaKey || e.ctrlKey)) return;
@@ -210,19 +260,18 @@ function Board() {
     (nodeId: string) => {
       history.commit();
       setNodes((ns) => {
+        // React Flow's Background sits at zIndex -1; anything below 0 vanishes.
+        // Push target below every other node, then normalize so min is 0.
         const others = ns.filter((n) => n.id !== nodeId);
-        const minOther = Math.min(0, ...others.map((n) => n.zIndex ?? 0));
-        // Keep the target at 0 (React Flow's Background sits at -1). If any
-        // other node is already at 0 or below, bump everyone else up so the
-        // target can sit at 0 alone.
-        if (minOther > 0) {
-          return ns.map((n) =>
-            n.id === nodeId ? { ...n, zIndex: 0 } : n,
-          );
-        }
+        const minOther = others.length
+          ? Math.min(...others.map((n) => n.zIndex ?? 0))
+          : 0;
+        const targetZ = minOther - 1;
+        const overallMin = Math.min(targetZ, minOther);
+        const shift = overallMin < 0 ? -overallMin : 0;
         return ns.map((n) => {
-          if (n.id === nodeId) return { ...n, zIndex: 0 };
-          return { ...n, zIndex: (n.zIndex ?? 0) + 1 };
+          const base = n.id === nodeId ? targetZ : n.zIndex ?? 0;
+          return { ...n, zIndex: base + shift };
         });
       });
     },
@@ -245,7 +294,7 @@ function Board() {
     [history, setNodes],
   );
 
-  const copyLink = useCallback((node: import("@xyflow/react").Node) => {
+  const copyLink = useCallback((node: Node) => {
     const d = node.data as Record<string, unknown>;
     const url =
       typeof d.url === "string"
@@ -344,10 +393,22 @@ function Board() {
             onReconnectStart={history.commit}
             onNodeContextMenu={(e, node) => {
               e.preventDefault();
+              setPaneMenu(null);
               setContextMenu({ x: e.clientX, y: e.clientY, node });
             }}
-            onPaneClick={() => setContextMenu(null)}
-            onMove={() => setContextMenu(null)}
+            onPaneContextMenu={(e) => {
+              e.preventDefault();
+              setContextMenu(null);
+              setPaneMenu({ x: e.clientX, y: e.clientY });
+            }}
+            onPaneClick={() => {
+              setContextMenu(null);
+              setPaneMenu(null);
+            }}
+            onMove={() => {
+              setContextMenu(null);
+              setPaneMenu(null);
+            }}
             onBeforeDelete={async () => {
               history.commit();
               return true;
@@ -380,6 +441,31 @@ function Board() {
             onColor: (c) => setNodeColor(contextMenu.node.id, c),
             onCopyLink: () => copyLink(contextMenu.node),
             onClose: () => setContextMenu(null),
+          }}
+        />
+      ) : null}
+      {paneMenu ? (
+        <PaneContextMenu
+          state={paneMenu}
+          actions={{
+            onAddNote: () =>
+              addNoteAt(
+                rf.screenToFlowPosition({ x: paneMenu.x, y: paneMenu.y }),
+              ),
+            onAddTodo: () =>
+              addTodoAt(
+                rf.screenToFlowPosition({ x: paneMenu.x, y: paneMenu.y }),
+              ),
+            onAddText: () =>
+              addTextAt(
+                rf.screenToFlowPosition({ x: paneMenu.x, y: paneMenu.y }),
+              ),
+            onAddFrame: () =>
+              addFrameAt(
+                rf.screenToFlowPosition({ x: paneMenu.x, y: paneMenu.y }),
+              ),
+            onAddUrl: () => setUrlOpen(true),
+            onClose: () => setPaneMenu(null),
           }}
         />
       ) : null}

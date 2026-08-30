@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useReactFlow, type Edge, type Node } from "@xyflow/react";
 import { useHistory } from "./use-history";
 
@@ -22,9 +22,12 @@ export function useBoardHistory(setNodes: SetNodes, setEdges: SetEdges) {
     [rf],
   );
 
-  // Commit the current state to history — call BEFORE a mutation so undo
-  // restores the pre-mutation state.
   const commit = useCallback(() => history.commit(snapshot()), [history, snapshot]);
+
+  const commitSnapshot = useCallback(
+    (state: Snapshot) => history.commit(state),
+    [history],
+  );
 
   const undo = useCallback(() => {
     const prev = history.undo(snapshot());
@@ -55,11 +58,16 @@ export function useBoardHistory(setNodes: SetNodes, setEdges: SetEdges) {
     return () => window.removeEventListener("keydown", onKey);
   }, [undo, redo]);
 
-  return {
-    commit,
-    undo,
-    redo,
-    canUndo: history.canUndo,
-    canRedo: history.canRedo,
-  };
+  return useMemo(
+    () => ({
+      commit,
+      commitSnapshot,
+      undo,
+      redo,
+      snapshot,
+      canUndo: history.canUndo,
+      canRedo: history.canRedo,
+    }),
+    [commit, commitSnapshot, undo, redo, snapshot, history.canUndo, history.canRedo],
+  );
 }

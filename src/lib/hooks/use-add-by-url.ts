@@ -7,8 +7,6 @@ import { makeBookmarkNode, makeEmbedNode } from "#/lib/board/factories";
 type SetNodes = (updater: (nodes: Node[]) => Node[]) => void;
 type XY = { x: number; y: number };
 
-// Adds an embed node for supported services (YouTube/Vimeo/Loom), otherwise
-// fetches OG metadata and adds a bookmark card.
 export function useAddByUrl(setNodes: SetNodes) {
   return useCallback(
     async (url: string, at: XY) => {

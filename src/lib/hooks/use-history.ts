@@ -1,8 +1,5 @@
 import { useCallback, useRef, useState } from "react";
 
-// Simple past/future history stacks. Callers snapshot the state BEFORE they
-// mutate it (via `commit`), and later call `undo` / `redo` with the current
-// state to get the previous / next state back.
 export function useHistory<T>(limit = 100) {
   const past = useRef<T[]>([]);
   const future = useRef<T[]>([]);

@@ -13,8 +13,6 @@ type XY = { x: number; y: number };
 
 const DEFAULT_IMAGE_DIMS = { w: 240, h: 180 };
 
-// Upload each file and add the resulting node (image or file card) at the
-// given position with a small stagger for multi-drops.
 export function useAddFiles(setNodes: SetNodes, uploadFile: UploadFile) {
   return useCallback(
     async (files: File[], at: XY) => {

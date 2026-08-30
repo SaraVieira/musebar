@@ -22,10 +22,6 @@ export function BoardHistoryProvider({
   );
 }
 
-// Nodes call this before applying a mutation so undo restores the
-// pre-mutation state. For text fields the convention is: call on focus
-// (capturing the "before" state), so one focused edit session collapses to
-// a single undo step.
 export function useBoardCommit() {
   return useContext(BoardHistoryContext).commit;
 }

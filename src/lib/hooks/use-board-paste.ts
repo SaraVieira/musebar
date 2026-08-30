@@ -9,8 +9,6 @@ function isEditableTarget(t: EventTarget | null) {
   return tag === "INPUT" || tag === "TEXTAREA";
 }
 
-// Global paste handler: routes files/URLs onto the board unless focus is
-// inside a form field or content-editable element.
 export function useBoardPaste({
   getCenter,
   onFiles,

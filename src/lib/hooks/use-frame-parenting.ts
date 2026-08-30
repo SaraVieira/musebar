@@ -7,9 +7,6 @@ import {
 
 type SetNodes = (updater: (nodes: Node[]) => Node[]) => void;
 
-// When a card is dropped inside a frame, adopt it as a child of that frame.
-// When dragged out, detach and restore absolute position. Frames themselves
-// are never re-parented (avoids nested frames).
 export function useFrameParenting(setNodes: SetNodes): OnNodeDrag {
   const rf = useReactFlow();
 
@@ -39,7 +36,7 @@ export function useFrameParenting(setNodes: SetNodes): OnNodeDrag {
         const fw = n.width ?? 0;
         const fh = n.height ?? 0;
         if (cx >= fa.x && cx <= fa.x + fw && cy >= fa.y && cy <= fa.y + fh) {
-          target = n; // last match wins → topmost frame at that point
+          target = n;
         }
       }
 
@@ -65,8 +62,7 @@ export function useFrameParenting(setNodes: SetNodes): OnNodeDrag {
           return { ...n, parentId: undefined, position: dragAbs };
         });
 
-        // React Flow requires parents to appear before their children in the
-        // array. If we just adopted `dragged`, reorder if needed.
+        // React Flow requires parents to appear before children in the array.
         if (target) {
           const parentIdx = updated.findIndex((n) => n.id === target.id);
           const childIdx = updated.findIndex((n) => n.id === dragged.id);

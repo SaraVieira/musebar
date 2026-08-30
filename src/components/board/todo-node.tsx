@@ -8,6 +8,7 @@ import {
 import { CARD_COLORS, ColorPicker } from "./color-picker";
 import { NodeHandles } from "./node-handles";
 import { useBoardCommit } from "#/lib/board/history-context";
+import { useCommitOnFirstEdit } from "#/lib/hooks/use-commit-on-first-edit";
 import { cn } from "#/lib/utils";
 
 export interface TodoItem {
@@ -38,6 +39,8 @@ export function TodoNodeView({
 }: NodeProps<TodoNode>) {
   const { updateNodeData } = useReactFlow();
   const commit = useBoardCommit();
+  const titleEditGuard = useCommitOnFirstEdit();
+  const itemEditGuard = useCommitOnFirstEdit();
   const itemRefs = useRef<Map<string, HTMLInputElement>>(new Map());
 
   const items = data.items ?? [newItem()];
@@ -126,7 +129,7 @@ export function TodoNodeView({
             <input
               type="text"
               value={title}
-              onFocus={commit}
+              {...titleEditGuard}
               onChange={(e) => updateNodeData(id, { title: e.target.value })}
               placeholder="Untitled list"
               className="min-w-0 flex-1 border-none bg-transparent text-sm font-semibold outline-none placeholder:text-gray-800/40"
@@ -153,7 +156,9 @@ export function TodoNodeView({
                 ref={setItemRef(item.id)}
                 type="text"
                 value={item.text}
-                onFocus={commit}
+                onFocus={itemEditGuard.onFocus}
+                onBeforeInput={itemEditGuard.onBeforeInput}
+                onBlur={itemEditGuard.onBlur}
                 onChange={(e) => updateItem(item.id, { text: e.target.value })}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
