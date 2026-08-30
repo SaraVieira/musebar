@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   createFileRoute,
   notFound,
@@ -19,6 +19,10 @@ import { ArrowLeft, Redo2, Undo2 } from "lucide-react";
 import { BoardHistoryProvider } from "#/lib/board/history-context";
 import { Button } from "#/components/ui/button";
 import { BoardSidebar } from "#/components/board/board-sidebar";
+import {
+  NodeContextMenu,
+  type NodeContextMenuState,
+} from "#/components/board/node-context-menu";
 import { UrlDialog } from "#/components/board/url-dialog";
 import { BookmarkNodeView } from "#/components/board/bookmark-node";
 import { EmbedNodeView } from "#/components/board/embed-node";
@@ -30,6 +34,7 @@ import { TextNodeView } from "#/components/board/text-node";
 import { TodoNodeView } from "#/components/board/todo-node";
 import { getSession } from "#/lib/auth-server";
 import { getProject } from "#/lib/projects-server";
+import { duplicateNodes } from "#/lib/board/duplicate";
 import {
   makeFrameNode,
   makeNoteNode,
@@ -80,6 +85,9 @@ function Board() {
   const router = useRouter();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [urlOpen, setUrlOpen] = useState(false);
+  const [contextMenu, setContextMenu] = useState<NodeContextMenuState | null>(
+    null,
+  );
   const {
     nodes,
     edges,
@@ -153,6 +161,100 @@ function Board() {
     history.commit();
     setNodes((ns) => [makeFrameNode(boardCenter()), ...ns]);
   }, [history, boardCenter, setNodes]);
+
+  // Duplicate the current selection (or a specific node if provided).
+  const duplicate = useCallback(
+    (nodeId?: string) => {
+      const source = nodeId
+        ? [rf.getNode(nodeId)].filter((n): n is NonNullable<typeof n> => !!n)
+        : rf.getNodes().filter((n) => n.selected);
+      if (source.length === 0) return;
+      history.commit();
+      const clones = duplicateNodes(source);
+      setNodes((ns) => [
+        ...ns.map((n) => ({ ...n, selected: false })),
+        ...clones,
+      ]);
+    },
+    [rf, history, setNodes],
+  );
+
+  // Cmd/Ctrl+D duplicates the current selection.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (!(e.metaKey || e.ctrlKey)) return;
+      if (e.key.toLowerCase() !== "d") return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.isContentEditable || /INPUT|TEXTAREA/.test(t.tagName))) return;
+      e.preventDefault();
+      duplicate();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [duplicate]);
+
+  const bringToFront = useCallback(
+    (nodeId: string) => {
+      history.commit();
+      setNodes((ns) => {
+        const max = Math.max(0, ...ns.map((n) => n.zIndex ?? 0));
+        return ns.map((n) =>
+          n.id === nodeId ? { ...n, zIndex: max + 1 } : n,
+        );
+      });
+    },
+    [history, setNodes],
+  );
+
+  const sendToBack = useCallback(
+    (nodeId: string) => {
+      history.commit();
+      setNodes((ns) => {
+        const others = ns.filter((n) => n.id !== nodeId);
+        const minOther = Math.min(0, ...others.map((n) => n.zIndex ?? 0));
+        // Keep the target at 0 (React Flow's Background sits at -1). If any
+        // other node is already at 0 or below, bump everyone else up so the
+        // target can sit at 0 alone.
+        if (minOther > 0) {
+          return ns.map((n) =>
+            n.id === nodeId ? { ...n, zIndex: 0 } : n,
+          );
+        }
+        return ns.map((n) => {
+          if (n.id === nodeId) return { ...n, zIndex: 0 };
+          return { ...n, zIndex: (n.zIndex ?? 0) + 1 };
+        });
+      });
+    },
+    [history, setNodes],
+  );
+
+  const setNodeColor = useCallback(
+    (nodeId: string, color: string) => {
+      history.commit();
+      rf.updateNodeData(nodeId, { color });
+    },
+    [history, rf],
+  );
+
+  const deleteNode = useCallback(
+    (nodeId: string) => {
+      history.commit();
+      setNodes((ns) => ns.filter((n) => n.id !== nodeId));
+    },
+    [history, setNodes],
+  );
+
+  const copyLink = useCallback((node: import("@xyflow/react").Node) => {
+    const d = node.data as Record<string, unknown>;
+    const url =
+      typeof d.url === "string"
+        ? d.url
+        : typeof d.src === "string"
+          ? d.src
+          : "";
+    if (url) void navigator.clipboard.writeText(url);
+  }, []);
 
   const onDrop = useCallback(
     async (e: React.DragEvent<HTMLDivElement>) => {
@@ -240,6 +342,12 @@ function Board() {
             onNodeDragStart={onNodeDragStart}
             onNodeDragStop={onNodeDragStop}
             onReconnectStart={history.commit}
+            onNodeContextMenu={(e, node) => {
+              e.preventDefault();
+              setContextMenu({ x: e.clientX, y: e.clientY, node });
+            }}
+            onPaneClick={() => setContextMenu(null)}
+            onMove={() => setContextMenu(null)}
             onBeforeDelete={async () => {
               history.commit();
               return true;
@@ -261,6 +369,20 @@ function Board() {
         onOpenChange={setUrlOpen}
         onSubmit={(url) => addByUrl(url, boardCenter())}
       />
+      {contextMenu ? (
+        <NodeContextMenu
+          state={contextMenu}
+          actions={{
+            onDuplicate: () => duplicate(contextMenu.node.id),
+            onDelete: () => deleteNode(contextMenu.node.id),
+            onBringToFront: () => bringToFront(contextMenu.node.id),
+            onSendToBack: () => sendToBack(contextMenu.node.id),
+            onColor: (c) => setNodeColor(contextMenu.node.id, c),
+            onCopyLink: () => copyLink(contextMenu.node),
+            onClose: () => setContextMenu(null),
+          }}
+        />
+      ) : null}
     </div>
     </BoardHistoryProvider>
   );
