@@ -15,10 +15,6 @@ RUN pnpm install --frozen-lockfile --prod=false
 
 FROM base AS builder
 WORKDIR /app
-# Temporary: force tldraw's license check to think we're in dev so it doesn't
-# hide the editor in production. Remove once we have a real tldraw license key.
-ARG TLDRAW_FORCE_DEV=true
-ENV TLDRAW_FORCE_DEV=$TLDRAW_FORCE_DEV
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN pnpm run generate-routes
