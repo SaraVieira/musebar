@@ -21,6 +21,8 @@ import { ArrowLeft, Keyboard, Redo2, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { BoardHistoryProvider } from "#/lib/board/history-context";
 import { ShortcutsDialog } from "#/components/board/shortcuts-dialog";
+import { BoardSettingsButton } from "#/components/board/board-settings";
+import { BackgroundVariant } from "@xyflow/react";
 import { Button } from "#/components/ui/button";
 import { BoardSidebar } from "#/components/board/board-sidebar";
 import {
@@ -112,6 +114,8 @@ function Board() {
     onNodesChange,
     onEdgesChange,
     onConnect,
+    settings,
+    updateSettings,
     uploadFile,
   } = useBoard(project);
   const rf = useReactFlow();
@@ -378,6 +382,7 @@ function Board() {
         >
           <Keyboard aria-hidden />
         </Button>
+        <BoardSettingsButton settings={settings} onChange={updateSettings} />
       </header>
       <div className="flex min-h-0 flex-1">
         <BoardSidebar
@@ -431,8 +436,17 @@ function Board() {
             minZoom={0.1}
             maxZoom={2.5}
             colorMode="dark"
+            snapToGrid={settings.snap}
+            snapGrid={[settings.gridSize, settings.gridSize]}
           >
-            <Background gap={20} size={1} />
+            {settings.bgVariant !== "none" ? (
+              <Background
+                variant={settings.bgVariant as unknown as BackgroundVariant}
+                color={settings.bgColor}
+                gap={settings.gridSize}
+                size={1}
+              />
+            ) : null}
             <MiniMap pannable zoomable />
             <Controls />
           </ReactFlow>
