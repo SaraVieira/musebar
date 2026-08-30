@@ -12,6 +12,7 @@ import {
   NoteCardShapeUtil,
   type NoteCardShape,
 } from "#/components/board/note-shape";
+import { FileCardShapeUtil } from "#/components/board/file-shape";
 import {
   DefaultToolbar,
   Tldraw,
@@ -26,7 +27,7 @@ import "tldraw/tldraw.css";
 import { useTldraw } from "#/lib/hooks/use-tldraw";
 import { musebarAssetStore } from "#/lib/tldraw";
 
-const customShapeUtils = [NoteCardShapeUtil];
+const customShapeUtils = [NoteCardShapeUtil, FileCardShapeUtil];
 
 const uiOverrides: TLUiOverrides = {
   tools(editor, tools) {

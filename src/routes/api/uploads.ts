@@ -5,9 +5,6 @@ import { db } from "#/db";
 import { Assets, Projects } from "#/db/schema";
 import { MAX_FILE_SIZE } from "#/lib/constants";
 
-const ALLOWED =
-  /^(image\/(png|jpe?g|gif|webp|svg\+xml|avif)|video\/(mp4|webm|quicktime))$/;
-
 async function handler({ request }: { request: Request }) {
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session) return new Response("Unauthorized", { status: 401 });
@@ -24,9 +21,6 @@ async function handler({ request }: { request: Request }) {
   }
   if (file.size > MAX_FILE_SIZE) {
     return new Response("File too large", { status: 413 });
-  }
-  if (!ALLOWED.test(file.type)) {
-    return new Response(`Unsupported type: ${file.type}`, { status: 415 });
   }
 
   const [project] = await db

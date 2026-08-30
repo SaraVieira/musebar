@@ -1,10 +1,33 @@
-import { AssetRecordType, loadSnapshot, type Editor } from "tldraw";
+import {
+  AssetRecordType,
+  createShapeId,
+  createShapesForAssets,
+  loadSnapshot,
+  Vec,
+  type Editor,
+} from "tldraw";
 import { fetchLinkMetadata } from "../link-metadata-server";
 import { useEffect, useRef, useState } from "react";
 import { readImageDims, readVideoDims } from "../tldraw";
 import { updateProjectContent } from "../projects-server";
+import type { FileCardShape } from "#/components/board/file-shape";
 
 const SAVE_DEBOUNCE_MS = 800;
+
+async function uploadFile(file: File, projectId: string) {
+  const form = new FormData();
+  form.set("file", file);
+  form.set("projectId", projectId);
+  const res = await fetch("/api/uploads", { method: "POST", body: form });
+  if (!res.ok) {
+    throw new Error(`Upload failed: ${res.status} ${await res.text()}`);
+  }
+  return (await res.json()) as { id: string; src: string; mimeType: string };
+}
+
+function isMediaMime(mime: string) {
+  return mime.startsWith("image/") || mime.startsWith("video/");
+}
 
 export const useTldraw = ({
   project,
@@ -37,20 +60,7 @@ export const useTldraw = ({
     });
 
     editor.registerExternalAssetHandler("file", async ({ file }) => {
-      const form = new FormData();
-      form.set("file", file);
-      form.set("projectId", project.id);
-      const res = await fetch("/api/uploads", {
-        method: "POST",
-        body: form,
-      });
-      if (!res.ok) {
-        throw new Error(`Upload failed: ${res.status} ${await res.text()}`);
-      }
-      const { src, mimeType } = (await res.json()) as {
-        src: string;
-        mimeType: string;
-      };
+      const { src, mimeType } = await uploadFile(file, project.id);
 
       if (mimeType.startsWith("image/")) {
         const { w, h } = await readImageDims(file);
@@ -90,7 +100,40 @@ export const useTldraw = ({
         };
       }
 
-      throw new Error(`Unsupported file type: ${mimeType}`);
+      throw new Error(`Non-media handled elsewhere: ${mimeType}`);
+    });
+
+    editor.registerExternalContentHandler("files", async ({ files, point }) => {
+      const center =
+        point ??
+        (editor.inputs.getShiftKey()
+          ? editor.inputs.getCurrentPagePoint()
+          : editor.getViewportPageBounds().center);
+
+      const media: File[] = [];
+      const other: File[] = [];
+      for (const file of files) {
+        (isMediaMime(file.type) ? media : other).push(file);
+      }
+
+      if (media.length > 0) {
+        const assets = await Promise.all(
+          media.map((file) =>
+            editor.getAssetForExternalContent({ type: "file", file }),
+          ),
+        );
+        const validAssets = assets.filter((a): a is NonNullable<typeof a> =>
+          Boolean(a),
+        );
+        if (validAssets.length > 0) {
+          editor.createAssets(validAssets);
+          await createShapesForAssets(editor, validAssets, center);
+        }
+      }
+
+      other.forEach((file, i) => {
+        placeFileCard(editor, file, project.id, center, i);
+      });
     });
 
     setEditor(editor);
@@ -131,3 +174,43 @@ export const useTldraw = ({
     editor,
   };
 };
+
+async function placeFileCard(
+  editor: Editor,
+  file: File,
+  projectId: string,
+  center: { x: number; y: number },
+  offsetIndex: number,
+) {
+  const w = 240;
+  const h = 96;
+  const id = createShapeId();
+  const offset = new Vec(offsetIndex * 16, offsetIndex * 16);
+
+  editor.createShape<FileCardShape>({
+    id,
+    type: "file-card",
+    x: center.x - w / 2 + offset.x,
+    y: center.y - h / 2 + offset.y,
+    props: {
+      w,
+      h,
+      name: file.name,
+      mimeType: file.type || "application/octet-stream",
+      size: file.size,
+      src: "",
+    },
+  });
+
+  try {
+    const { src } = await uploadFile(file, projectId);
+    editor.updateShape<FileCardShape>({
+      id,
+      type: "file-card",
+      props: { src },
+    });
+  } catch (err) {
+    editor.deleteShape(id);
+    console.error("[file-card] upload failed", err);
+  }
+}
