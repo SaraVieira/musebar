@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   createFileRoute,
   notFound,
@@ -17,14 +17,10 @@ import {
   type OnNodeDrag,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import {
-  ArrowLeft,
-  Frame,
-  ListChecks,
-  StickyNote,
-  Type,
-} from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "#/components/ui/button";
+import { BoardSidebar } from "#/components/board/board-sidebar";
+import { UrlDialog } from "#/components/board/url-dialog";
 import { getSession } from "#/lib/auth-server";
 import { getProject } from "#/lib/projects-server";
 import { fetchLinkMetadata } from "#/lib/link-metadata-server";
@@ -83,6 +79,7 @@ function Board() {
   const { project } = Route.useLoaderData();
   const router = useRouter();
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const [urlOpen, setUrlOpen] = useState(false);
   const {
     nodes,
     edges,
@@ -292,8 +289,9 @@ function Board() {
         return;
       }
 
-      const url = e.clipboardData.getData("text/uri-list")
-        || e.clipboardData.getData("text/plain");
+      const url =
+        e.clipboardData.getData("text/uri-list") ||
+        e.clipboardData.getData("text/plain");
       if (url && /^https?:\/\//i.test(url.trim())) {
         e.preventDefault();
         await handleUrl(url.trim().split(/\s+/)[0], at);
@@ -398,46 +396,47 @@ function Board() {
           Back
         </Button>
         <h1 className="flex-1 truncate text-sm font-medium">{project.name}</h1>
-        <Button variant="outline" size="sm" onClick={addNote}>
-          <StickyNote aria-hidden />
-          Note
-        </Button>
-        <Button variant="outline" size="sm" onClick={addTodo}>
-          <ListChecks aria-hidden />
-          Todo
-        </Button>
-        <Button variant="outline" size="sm" onClick={addText}>
-          <Type aria-hidden />
-          Text
-        </Button>
-        <Button variant="outline" size="sm" onClick={addFrame}>
-          <Frame aria-hidden />
-          Frame
-        </Button>
       </header>
-      <div
-        ref={wrapperRef}
-        className="min-h-0 flex-1"
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={onDrop}
-      >
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          nodeTypes={nodeTypes}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onNodeDragStop={onNodeDragStop}
-          defaultEdgeOptions={defaultEdgeOptions}
-          fitView={nodes.length > 0}
-          colorMode="dark"
+      <div className="flex min-h-0 flex-1">
+        <BoardSidebar
+          onAddNote={addNote}
+          onAddTodo={addTodo}
+          onAddText={addText}
+          onAddFrame={addFrame}
+          onAddUrl={() => setUrlOpen(true)}
+          onAddFiles={(files) => handleFiles(files, boardCenter())}
+        />
+        <div
+          ref={wrapperRef}
+          className="min-h-0 flex-1"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={onDrop}
         >
-          <Background gap={20} size={1} />
-          <MiniMap pannable zoomable />
-          <Controls />
-        </ReactFlow>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            nodeTypes={nodeTypes}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onNodeDragStop={onNodeDragStop}
+            defaultEdgeOptions={defaultEdgeOptions}
+            fitView={nodes.length > 0}
+            minZoom={0.1}
+            maxZoom={2.5}
+            colorMode="dark"
+          >
+            <Background gap={20} size={1} />
+            <MiniMap pannable zoomable />
+            <Controls />
+          </ReactFlow>
+        </div>
       </div>
+      <UrlDialog
+        open={urlOpen}
+        onOpenChange={setUrlOpen}
+        onSubmit={(url) => handleUrl(url, boardCenter())}
+      />
     </div>
   );
 }
