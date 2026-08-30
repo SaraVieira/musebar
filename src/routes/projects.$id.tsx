@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { BoardHistoryProvider } from "#/lib/board/history-context";
 import { ShortcutsDialog } from "#/components/board/shortcuts-dialog";
 import { BoardSettingsButton } from "#/components/board/board-settings";
+import { ExportMenu } from "#/components/board/export-menu";
 import { BackgroundVariant } from "@xyflow/react";
 import { Button } from "#/components/ui/button";
 import { BoardSidebar } from "#/components/board/board-sidebar";
@@ -382,6 +383,7 @@ function Board() {
         >
           <Keyboard aria-hidden />
         </Button>
+        <ExportMenu projectName={project.name} />
         <BoardSettingsButton settings={settings} onChange={updateSettings} />
       </header>
       <div className="flex min-h-0 flex-1">
