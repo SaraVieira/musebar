@@ -3,14 +3,15 @@ import {
   createShapeId,
   createShapesForAssets,
   loadSnapshot,
-  Vec,
   type Editor,
 } from "tldraw";
 import { fetchLinkMetadata } from "../link-metadata-server";
 import { useEffect, useRef, useState } from "react";
-import { readImageDims, readVideoDims } from "../tldraw";
-import { updateProjectContent } from "../projects-server";
+import { readImageDims, readVideoDims, revokeCachedBlobUrl } from "../tldraw";
+import { getProject, updateProjectContent } from "../projects-server";
 import type { FileCardShape } from "#/components/board/file-shape";
+
+type Project = NonNullable<Awaited<ReturnType<typeof getProject>>>;
 
 const SAVE_DEBOUNCE_MS = 800;
 
@@ -29,15 +30,7 @@ function isMediaMime(mime: string) {
   return mime.startsWith("image/") || mime.startsWith("video/");
 }
 
-export const useTldraw = ({
-  project,
-}: {
-  project: typeof import("../projects-server").getProject extends (
-    ...args: any
-  ) => Promise<infer R>
-    ? R
-    : never;
-}) => {
+export const useTldraw = ({ project }: { project: Project }) => {
   const [editor, setEditor] = useState<Editor | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -131,9 +124,9 @@ export const useTldraw = ({
         }
       }
 
-      other.forEach((file, i) => {
-        placeFileCard(editor, file, project.id, center, i);
-      });
+      await Promise.all(
+        other.map((file, i) => placeFileCard(editor, file, project.id, center, i)),
+      );
     });
 
     setEditor(editor);
@@ -166,6 +159,10 @@ export const useTldraw = ({
     return () => {
       unsubscribe();
       if (saveTimer.current) clearTimeout(saveTimer.current);
+      for (const asset of editor.getAssets()) {
+        const src = "src" in asset.props ? asset.props.src : null;
+        if (src && src.startsWith("/api/assets/")) revokeCachedBlobUrl(src);
+      }
     };
   }, [editor, project.id, project.content]);
 
@@ -182,35 +179,30 @@ async function placeFileCard(
   center: { x: number; y: number },
   offsetIndex: number,
 ) {
+  let uploaded: { src: string };
+  try {
+    uploaded = await uploadFile(file, projectId);
+  } catch (err) {
+    console.error("[file-card] upload failed", err);
+    return;
+  }
+
   const w = 240;
   const h = 96;
-  const id = createShapeId();
-  const offset = new Vec(offsetIndex * 16, offsetIndex * 16);
+  const offset = offsetIndex * 16;
 
   editor.createShape<FileCardShape>({
-    id,
+    id: createShapeId(),
     type: "file-card",
-    x: center.x - w / 2 + offset.x,
-    y: center.y - h / 2 + offset.y,
+    x: center.x - w / 2 + offset,
+    y: center.y - h / 2 + offset,
     props: {
       w,
       h,
       name: file.name,
       mimeType: file.type || "application/octet-stream",
       size: file.size,
-      src: "",
+      src: uploaded.src,
     },
   });
-
-  try {
-    const { src } = await uploadFile(file, projectId);
-    editor.updateShape<FileCardShape>({
-      id,
-      type: "file-card",
-      props: { src },
-    });
-  } catch (err) {
-    editor.deleteShape(id);
-    console.error("[file-card] upload failed", err);
-  }
 }

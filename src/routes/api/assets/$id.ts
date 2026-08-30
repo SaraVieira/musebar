@@ -4,6 +4,16 @@ import { auth } from "#/lib/auth";
 import { db } from "#/db";
 import { Assets } from "#/db/schema";
 
+function safeFilename(name: string) {
+  const ascii = name.replace(/[^\x20-\x7E]/g, "_").replace(/["\\]/g, "_");
+  const encoded = encodeURIComponent(name);
+  return `filename="${ascii}"; filename*=UTF-8''${encoded}`;
+}
+
+function isInlineSafeMime(mime: string) {
+  return mime.startsWith("image/") || mime.startsWith("video/") || mime.startsWith("audio/");
+}
+
 async function handler({
   request,
   params,
@@ -11,9 +21,7 @@ async function handler({
   request: Request;
   params: { id: string };
 }) {
-  console.log("[assets] GET", params.id, "cookie?", !!request.headers.get("cookie"));
   const session = await auth.api.getSession({ headers: request.headers });
-  console.log("[assets]  session:", session?.user?.id ?? "none");
   if (!session) return new Response("Unauthorized", { status: 401 });
 
   const [asset] = await db
@@ -21,16 +29,18 @@ async function handler({
     .from(Assets)
     .where(and(eq(Assets.id, params.id), eq(Assets.userId, session.user.id)))
     .limit(1);
-  console.log("[assets]  found:", !!asset);
   if (!asset) return new Response("Not found", { status: 404 });
 
   const bytes = new Uint8Array(asset.data as Buffer);
+  const disposition = isInlineSafeMime(asset.mimeType) ? "inline" : "attachment";
 
   return new Response(bytes, {
     headers: {
       "Content-Type": asset.mimeType,
       "Content-Length": String(asset.size),
       "Cache-Control": "private, max-age=31536000, immutable",
+      "Content-Disposition": `${disposition}; ${safeFilename(asset.name)}`,
+      "X-Content-Type-Options": "nosniff",
     },
   });
 }

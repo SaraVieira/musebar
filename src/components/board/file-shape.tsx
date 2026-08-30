@@ -104,13 +104,15 @@ export class FileCardShapeUtil extends ShapeUtil<FileCardShape> {
         }}
       >
         <div style={{ flexShrink: 0, width: 40, height: 40 }}>
-          <FileIcon fileName={shape.props.name} width={40} height={40} />
+          <FileIcon fileName={shape.props.name} autoAssign width={40} height={40} />
         </div>
         <a
           href={shape.props.src}
+          download={shape.props.name}
           target="_blank"
           rel="noopener noreferrer"
           onPointerDown={(e) => e.stopPropagation()}
+          className="tl-file-card-link"
           style={{
             minWidth: 0,
             flex: 1,
@@ -136,6 +138,7 @@ export class FileCardShapeUtil extends ShapeUtil<FileCardShape> {
             {formatBytes(shape.props.size)}
           </div>
         </a>
+        <style>{`.tl-file-card-link:hover > div:first-child { text-decoration: underline; }`}</style>
       </HTMLContainer>
     );
   }

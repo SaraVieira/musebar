@@ -6,11 +6,21 @@ async function fetchAsBlobUrl(url: string) {
   const cached = blobUrlCache.get(url);
   if (cached) return cached;
   const promise = fetch(url, { credentials: "same-origin" }).then(async (res) => {
-    if (!res.ok) throw new Error(`Failed to fetch asset ${url}: ${res.status}`);
+    if (!res.ok) {
+      blobUrlCache.delete(url);
+      throw new Error(`Failed to fetch asset ${url}: ${res.status}`);
+    }
     return URL.createObjectURL(await res.blob());
   });
   blobUrlCache.set(url, promise);
   return promise;
+}
+
+export function revokeCachedBlobUrl(url: string) {
+  const cached = blobUrlCache.get(url);
+  if (!cached) return;
+  blobUrlCache.delete(url);
+  cached.then(URL.revokeObjectURL, () => {});
 }
 
 export const musebarAssetStore: TLAssetStore = {
