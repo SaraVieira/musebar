@@ -26,7 +26,7 @@ interface RegisterValues {
 
 const DEFAULT_VALUES: RegisterValues = { name: "", email: "", password: "" };
 
-export function Register() {
+function Register() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const {

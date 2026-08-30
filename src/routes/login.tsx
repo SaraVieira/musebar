@@ -25,7 +25,7 @@ interface LoginValues {
 
 const DEFAULT_VALUES: LoginValues = { email: "", password: "" };
 
-export function Login() {
+function Login() {
   const { hasUser } = Route.useLoaderData();
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();

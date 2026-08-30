@@ -42,16 +42,30 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       },
     ],
   }),
+  notFoundComponent: NotFound,
   shellComponent: RootDocument,
 });
 
+function NotFound() {
+  return (
+    <div className="grid min-h-screen place-items-center p-8">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold">Page not found</h1>
+        <a href="/" className="mt-4 inline-block underline">
+          Go home
+        </a>
+      </div>
+    </div>
+  );
+}
+
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         {children}
         <TanStackDevtools
           config={{
