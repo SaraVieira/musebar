@@ -14,6 +14,10 @@ import {
 } from "#/components/board/note-shape";
 import { FileCardShapeUtil } from "#/components/board/file-shape";
 import {
+  TodoCardShapeUtil,
+  type TodoCardShape,
+} from "#/components/board/todo-shape";
+import {
   DefaultToolbar,
   Tldraw,
   TldrawUiMenuItem,
@@ -27,7 +31,11 @@ import "tldraw/tldraw.css";
 import { useTldraw } from "#/lib/hooks/use-tldraw";
 import { musebarAssetStore } from "#/lib/tldraw";
 
-const customShapeUtils = [NoteCardShapeUtil, FileCardShapeUtil];
+const customShapeUtils = [
+  NoteCardShapeUtil,
+  FileCardShapeUtil,
+  TodoCardShapeUtil,
+];
 
 const uiOverrides: TLUiOverrides = {
   tools(editor, tools) {
@@ -46,6 +54,21 @@ const uiOverrides: TLUiOverrides = {
         });
       },
     };
+    tools["add-todo"] = {
+      id: "add-todo",
+      icon: "check",
+      label: "Add todo",
+      kbd: "t",
+      onSelect() {
+        const { x, y } = editor.getViewportPageBounds().center;
+        editor.createShape<TodoCardShape>({
+          id: createShapeId(),
+          type: "todo-card",
+          x: x - 130,
+          y: y - 100,
+        });
+      },
+    };
     return tools;
   },
 };
@@ -54,6 +77,7 @@ const KEEP_TOOLS = [
   "select",
   "hand",
   "add-note",
+  "add-todo",
   "arrow",
   "text",
   "frame",
