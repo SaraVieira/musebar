@@ -35,7 +35,14 @@ function parseSnapshot(raw: string | null): {
   try {
     const parsed = JSON.parse(raw);
     if (parsed && Array.isArray(parsed.nodes) && Array.isArray(parsed.edges)) {
-      return { nodes: parsed.nodes, edges: parsed.edges };
+      return {
+        nodes: parsed.nodes.map((n: Node) =>
+          n.type === "embed" && !n.dragHandle
+            ? { ...n, dragHandle: ".embed-drag-handle" }
+            : n,
+        ),
+        edges: parsed.edges,
+      };
     }
   } catch {}
   return { nodes: [], edges: [] };
