@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-router";
 import { LogOut, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { authClient } from "#/lib/auth-client";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent } from "#/components/ui/card";
@@ -60,14 +61,25 @@ function Dashboard() {
       setName("");
       await router.invalidate();
       router.navigate({ href: `/projects/${id}` });
+    } catch (err) {
+      toast.error("Couldn't create the project", {
+        description: err instanceof Error ? err.message : undefined,
+      });
     } finally {
       setBusy(false);
     }
   }
 
-  async function onDelete(id: string) {
-    await deleteProject({ data: { id } });
-    await router.invalidate();
+  async function onDelete(id: string, name: string) {
+    try {
+      await deleteProject({ data: { id } });
+      await router.invalidate();
+      toast.success(`Deleted "${name}"`);
+    } catch (err) {
+      toast.error("Couldn't delete the project", {
+        description: err instanceof Error ? err.message : undefined,
+      });
+    }
   }
 
   return (
@@ -127,7 +139,7 @@ function Dashboard() {
                     </Link>
                     <DeleteProjectButton
                       name={p.name}
-                      onConfirm={() => onDelete(p.id)}
+                      onConfirm={() => onDelete(p.id, p.name)}
                     />
                   </CardContent>
                 </Card>

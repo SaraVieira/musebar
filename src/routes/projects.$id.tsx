@@ -18,6 +18,7 @@ import {
 import type { Edge } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { ArrowLeft, Redo2, Undo2 } from "lucide-react";
+import { toast } from "sonner";
 import { BoardHistoryProvider } from "#/lib/board/history-context";
 import { Button } from "#/components/ui/button";
 import { BoardSidebar } from "#/components/board/board-sidebar";
@@ -302,7 +303,11 @@ function Board() {
         : typeof d.src === "string"
           ? d.src
           : "";
-    if (url) void navigator.clipboard.writeText(url);
+    if (!url) return;
+    navigator.clipboard
+      .writeText(url)
+      .then(() => toast.success("Link copied"))
+      .catch(() => toast.error("Couldn't copy link"));
   }, []);
 
   const onDrop = useCallback(

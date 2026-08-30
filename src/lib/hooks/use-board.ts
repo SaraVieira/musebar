@@ -2,13 +2,13 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
   useEdgesState,
   useNodesState,
-  useReactFlow,
   addEdge,
   type Edge,
   type Node,
   type OnConnect,
   type Connection,
 } from "@xyflow/react";
+import { toast } from "sonner";
 import { getProject, updateProjectContent } from "#/lib/projects-server";
 import { readImageDims } from "#/lib/media-dims";
 
@@ -62,8 +62,13 @@ export function useBoard(project: Project) {
     }
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
-      void updateProjectContent({
+      updateProjectContent({
         data: { id: project.id, content: JSON.stringify({ nodes, edges }) },
+      }).catch((err) => {
+        toast.error("Couldn't save the board", {
+          id: "board-save-error",
+          description: err instanceof Error ? err.message : undefined,
+        });
       });
     }, SAVE_DEBOUNCE_MS);
     return () => {
@@ -87,17 +92,4 @@ export function useBoard(project: Project) {
     uploadFile: (file: File) => uploadFile(file, project.id),
     readImageDims,
   };
-}
-
-function useAddNode() {
-  const { setNodes, screenToFlowPosition } = useReactFlow();
-  return useCallback(
-    (node: Node, atScreen?: { x: number; y: number }) => {
-      const position = atScreen
-        ? screenToFlowPosition(atScreen)
-        : node.position;
-      setNodes((ns) => [...ns, { ...node, position }]);
-    },
-    [setNodes, screenToFlowPosition],
-  );
 }

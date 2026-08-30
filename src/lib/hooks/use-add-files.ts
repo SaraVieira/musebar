@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import type { Node } from "@xyflow/react";
+import { toast } from "sonner";
 import { makeFileNode, makeImageNode } from "#/lib/board/factories";
 import { readImageDims } from "#/lib/media-dims";
 
@@ -30,7 +31,9 @@ export function useAddFiles(setNodes: SetNodes, uploadFile: UploadFile) {
             toAdd.push(makeFileNode(at, i, file, uploaded));
           }
         } catch (err) {
-          console.error("[board] upload failed", err);
+          toast.error(`Couldn't upload ${file.name}`, {
+            description: err instanceof Error ? err.message : undefined,
+          });
         }
       }
       if (toAdd.length > 0) setNodes((ns) => [...ns, ...toAdd]);
