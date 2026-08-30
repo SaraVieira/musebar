@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   createFileRoute,
   notFound,
@@ -17,9 +17,10 @@ import {
 } from "@xyflow/react";
 import type { Edge } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { ArrowLeft, Redo2, Undo2 } from "lucide-react";
+import { ArrowLeft, Keyboard, Redo2, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { BoardHistoryProvider } from "#/lib/board/history-context";
+import { ShortcutsDialog } from "#/components/board/shortcuts-dialog";
 import { Button } from "#/components/ui/button";
 import { BoardSidebar } from "#/components/board/board-sidebar";
 import {
@@ -53,6 +54,7 @@ import { useAddFiles } from "#/lib/hooks/use-add-files";
 import { useBoard } from "#/lib/hooks/use-board";
 import { useBoardHistory } from "#/lib/hooks/use-board-history";
 import { useBoardPaste } from "#/lib/hooks/use-board-paste";
+import { useBoardShortcuts } from "#/lib/hooks/use-board-shortcuts";
 import { useFrameParenting } from "#/lib/hooks/use-frame-parenting";
 
 const nodeTypes: NodeTypes = {
@@ -96,6 +98,7 @@ function Board() {
     null,
   );
   const [paneMenu, setPaneMenu] = useState<PaneContextMenuState | null>(null);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const preDragSnapshot = useRef<{
     nodes: Node[];
     edges: Edge[];
@@ -231,18 +234,14 @@ function Board() {
     [rf, history, setNodes, setEdges],
   );
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (!(e.metaKey || e.ctrlKey)) return;
-      if (e.key.toLowerCase() !== "d") return;
-      const t = e.target as HTMLElement | null;
-      if (t && (t.isContentEditable || /INPUT|TEXTAREA/.test(t.tagName))) return;
-      e.preventDefault();
-      duplicate();
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [duplicate]);
+  useBoardShortcuts({
+    onAddNote: addNote,
+    onAddTodo: addTodo,
+    onAddText: addText,
+    onAddFrame: addFrame,
+    onDuplicate: () => duplicate(),
+    onOpenShortcuts: () => setShortcutsOpen(true),
+  });
 
   const bringToFront = useCallback(
     (nodeId: string) => {
@@ -370,6 +369,15 @@ function Board() {
         >
           <Redo2 aria-hidden />
         </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Keyboard shortcuts"
+          title="Keyboard shortcuts (⌘/)"
+          onClick={() => setShortcutsOpen(true)}
+        >
+          <Keyboard aria-hidden />
+        </Button>
       </header>
       <div className="flex min-h-0 flex-1">
         <BoardSidebar
@@ -449,6 +457,7 @@ function Board() {
           }}
         />
       ) : null}
+      <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
       {paneMenu ? (
         <PaneContextMenu
           state={paneMenu}
