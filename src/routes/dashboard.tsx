@@ -7,7 +7,20 @@ import {
 import { LogOut, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { authClient } from "#/lib/auth-client";
-import { Button } from "#/components/pouf/Button";
+import { Button } from "#/components/ui/button";
+import { Card, CardContent } from "#/components/ui/card";
+import { Input } from "#/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "#/components/ui/alert-dialog";
 import { getSession } from "#/lib/auth-server";
 import {
   createProject,
@@ -53,66 +66,117 @@ function Dashboard() {
   }
 
   async function onDelete(id: string) {
-    if (!confirm("Delete this project?")) return;
     await deleteProject({ data: { id } });
     await router.invalidate();
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <header className="flex items-center justify-between p-4 border-b">
-        <span className="text-sm text-muted">{session.user.email}</span>
-        <Button variant="quiet" onClick={signOut}>
+    <div className="bg-background flex min-h-screen flex-col">
+      <header className="bg-background flex items-center justify-between border-b px-6 py-3">
+        <span className="text-muted-foreground text-sm">
+          {session.user.email}
+        </span>
+        <Button variant="ghost" size="sm" onClick={signOut}>
           <LogOut aria-hidden />
           Log out
         </Button>
       </header>
-      <main className="p-8 mx-auto w-full max-w-3xl">
-        <h1 className="text-3xl font-bold mb-6">Your projects</h1>
 
-        <form onSubmit={onCreate} className="flex gap-2 mb-8">
-          <input
+      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">
+        <h1 className="mb-6 text-3xl font-semibold tracking-tight">
+          Your projects
+        </h1>
+
+        <form onSubmit={onCreate} className="mb-8 flex gap-2">
+          <Input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="New project name…"
-            className="flex-1 rounded-lg border px-3 py-2 bg-transparent"
+            className="flex-1"
           />
-          <Button type="submit" loading={busy}>
+          <Button type="submit" disabled={busy || !name.trim()}>
             <Plus aria-hidden />
             Create
           </Button>
         </form>
 
         {projects.length === 0 ? (
-          <p className="text-muted">
-            No projects yet. Create your first board above.
-          </p>
+          <Card>
+            <CardContent className="text-muted-foreground py-12 text-center text-sm">
+              No projects yet. Create your first board above.
+            </CardContent>
+          </Card>
         ) : (
           <ul className="flex flex-col gap-2">
             {projects.map((p) => (
-              <li
-                key={p.id}
-                className="flex items-center justify-between rounded-lg border p-4"
-              >
-                <Link
-                  to="/projects/$id"
-                  params={{ id: p.id }}
-                  className="flex-1"
-                >
-                  <div className="font-medium">{p.name}</div>
-                  {p.description ? (
-                    <div className="text-sm text-muted">{p.description}</div>
-                  ) : null}
-                </Link>
-                <Button variant="quiet" onClick={() => onDelete(p.id)}>
-                  <Trash2 aria-hidden />
-                </Button>
+              <li key={p.id}>
+                <Card className="hover:bg-accent/40 transition-colors">
+                  <CardContent className="flex items-center gap-2 p-4">
+                    <Link
+                      to="/projects/$id"
+                      params={{ id: p.id }}
+                      className="min-w-0 flex-1"
+                    >
+                      <div className="truncate font-medium">{p.name}</div>
+                      {p.description ? (
+                        <div className="text-muted-foreground truncate text-sm">
+                          {p.description}
+                        </div>
+                      ) : null}
+                    </Link>
+                    <DeleteProjectButton
+                      name={p.name}
+                      onConfirm={() => onDelete(p.id)}
+                    />
+                  </CardContent>
+                </Card>
               </li>
             ))}
           </ul>
         )}
       </main>
     </div>
+  );
+}
+
+function DeleteProjectButton({
+  name,
+  onConfirm,
+}: {
+  name: string;
+  onConfirm: () => void | Promise<void>;
+}) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={`Delete ${name}`}
+          className="text-muted-foreground hover:text-destructive"
+        >
+          <Trash2 aria-hidden />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete this project?</AlertDialogTitle>
+          <AlertDialogDescription>
+            <strong>{name}</strong> and all of its notes, files, and boards will
+            be permanently deleted. This can't be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={onConfirm}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

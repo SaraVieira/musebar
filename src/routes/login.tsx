@@ -84,7 +84,7 @@ function Login() {
   }
 
   return (
-    <div className="bg-muted flex min-h-screen items-center justify-center p-6">
+    <div className="bg-background flex min-h-screen items-center justify-center p-6">
       <div className="w-full max-w-sm">
         <Card>
           <CardHeader className="text-center">
