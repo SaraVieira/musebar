@@ -11,10 +11,16 @@ import { Separator } from "#/components/pouf/separator";
 import { Blob } from "#/components/pouf/media";
 import { authClient } from "#/lib/auth-client";
 import { EMAIL_RE } from "#/lib/constants";
-import { anyUserExists } from "#/lib/user-server";
+import { anyUserExists, getAuthProviders } from "#/lib/user-server";
 
 export const Route = createFileRoute("/login")({
-  loader: async () => ({ hasUser: await anyUserExists() }),
+  loader: async () => {
+    const [hasUser, providers] = await Promise.all([
+      anyUserExists(),
+      getAuthProviders(),
+    ]);
+    return { hasUser, providers };
+  },
   component: Login,
 });
 
@@ -26,7 +32,7 @@ interface LoginValues {
 const DEFAULT_VALUES: LoginValues = { email: "", password: "" };
 
 function Login() {
-  const { hasUser } = Route.useLoaderData();
+  const { hasUser, providers } = Route.useLoaderData();
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const {
@@ -177,10 +183,14 @@ function Login() {
                 ) : null}
               </Stack>
 
-              <Separator />
-              <Button block variant="quiet" onClick={signInWithGitHub}>
-                Continue with GitHub
-              </Button>
+              {providers.github ? (
+                <>
+                  <Separator />
+                  <Button block variant="quiet" onClick={signInWithGitHub}>
+                    Continue with GitHub
+                  </Button>
+                </>
+              ) : null}
               {hasUser ? null : (
                 <Row justify="center">
                   <Text size="sm" muted>

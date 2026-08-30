@@ -12,18 +12,24 @@ async function anyUserExists() {
   return rows.length > 0;
 }
 
+export const hasGithubAuth = Boolean(
+  env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET,
+);
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "sqlite" }),
   emailAndPassword: {
     enabled: true,
   },
-  socialProviders: {
-    github: {
-      enabled: true,
-      clientId: env.GITHUB_CLIENT_ID!,
-      clientSecret: env.GITHUB_CLIENT_SECRET!,
-    },
-  },
+  socialProviders: hasGithubAuth
+    ? {
+        github: {
+          enabled: true,
+          clientId: env.GITHUB_CLIENT_ID!,
+          clientSecret: env.GITHUB_CLIENT_SECRET!,
+        },
+      }
+    : {},
   databaseHooks: {
     user: {
       create: {

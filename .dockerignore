@@ -1,0 +1,14 @@
+node_modules
+.output
+.git
+.vscode
+.idea
+.env
+.env.local
+.env.*.local
+dev.db
+dev.db-journal
+dev.db-shm
+dev.db-wal
+*.log
+.DS_Store
