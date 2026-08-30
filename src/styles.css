@@ -2,6 +2,64 @@
 @import "tw-animate-css";
 @import "./components/pouf/pouf.css";
 
+.note-card-content {
+  line-height: 1.4;
+  font-weight: 400;
+}
+.note-card-content p,
+.note-card-content li {
+  font-weight: 400;
+  margin: 0 0 6px;
+}
+.note-card-content p:last-child,
+.note-card-content li:last-child {
+  margin-bottom: 0;
+}
+.note-card-content h2,
+.note-card-content h3 {
+  font-weight: 700;
+  margin: 4px 0;
+  line-height: 1.2;
+}
+.note-card-content h2 {
+  font-size: 18px;
+}
+.note-card-content h3 {
+  font-size: 15px;
+}
+.note-card-content ul {
+  list-style: disc outside;
+  padding-left: 20px;
+  margin: 0 0 6px;
+}
+.note-card-content ol {
+  list-style: decimal outside;
+  padding-left: 20px;
+  margin: 0 0 6px;
+}
+.note-card-content li {
+  margin: 2px 0;
+}
+.note-card-content li::marker {
+  color: currentColor;
+  opacity: 0.6;
+}
+.note-card-content strong {
+  font-weight: 700;
+}
+.note-card-content em {
+  font-style: italic;
+}
+.note-card-content code {
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-size: 0.9em;
+}
+.note-card-editor:focus {
+  outline: none;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {

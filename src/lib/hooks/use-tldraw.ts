@@ -125,7 +125,9 @@ export const useTldraw = ({ project }: { project: Project }) => {
       }
 
       await Promise.all(
-        other.map((file, i) => placeFileCard(editor, file, project.id, center, i)),
+        other.map((file, i) =>
+          placeFileCard(editor, file, project.id, center, i),
+        ),
       );
     });
 

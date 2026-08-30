@@ -56,6 +56,15 @@ importers:
       '@tanstack/react-start':
         specifier: latest
         version: 1.168.49(crossws@0.4.12(srvx@0.11.22))(esbuild@0.28.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rolldown@1.2.6)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12))
+      '@tiptap/pm':
+        specifier: ^3.30.5
+        version: 3.30.5
+      '@tiptap/react':
+        specifier: ^3.30.5
+        version: 3.30.5(@floating-ui/dom@1.8.0)(@tiptap/core@3.30.5(@tiptap/pm@3.30.5))(@tiptap/pm@3.30.5)(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@tiptap/starter-kit':
+        specifier: ^3.30.5
+        version: 3.30.5
       '@tldraw/tlschema':
         specifier: 5.3.2
         version: 5.3.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -101,9 +110,6 @@ importers:
       react-hook-form:
         specifier: ^7.86.0
         version: 7.86.0(react@19.2.8)
-      shadcn:
-        specifier: ^4.19.0
-        version: 4.19.0(typescript@6.0.3)
       superjson:
         specifier: ^2.2.2
         version: 2.2.6
@@ -150,6 +156,9 @@ importers:
       dotenv:
         specifier: ^17.3.1
         version: 17.4.2
+      shadcn:
+        specifier: ^4.19.0
+        version: 4.19.0(typescript@6.0.3)
       tsx:
         specifier: ^4.21.0
         version: 4.23.12
