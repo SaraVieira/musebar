@@ -1,6 +1,7 @@
 import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
 import { relations, sql } from "drizzle-orm";
 import { index, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { describe } from "zod";
 
 export const user = sqliteTable("user", {
   id: text("id").primaryKey(),
@@ -114,12 +115,18 @@ export const accountRelations = relations(account, ({ one }) => ({
   }),
 }));
 
-export const todos = sqliteTable("todos", {
-  id: integer({ mode: "number" }).primaryKey({
-    autoIncrement: true,
-  }),
-  title: text().notNull(),
+export const Projects = sqliteTable("projects", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  content: text("content"),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
   createdAt: integer("created_at", { mode: "timestamp" }).default(
+    sql`(unixepoch())`,
+  ),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).default(
     sql`(unixepoch())`,
   ),
 });

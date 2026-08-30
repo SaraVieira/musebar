@@ -8,6 +8,13 @@
       "when": 1788023993097,
       "tag": "0000_tranquil_revanche",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1788075809689,
+      "tag": "0001_solid_stingray",
+      "breakpoints": true
     }
   ]
 }
