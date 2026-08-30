@@ -76,15 +76,8 @@ function Login() {
   }
 
   return (
-    <div
-      style={{
-        display: "grid",
-        placeItems: "center",
-        minHeight: "70vh",
-        padding: 24,
-      }}
-    >
-      <div style={{ width: "100%", maxWidth: 420 }}>
+    <div className="grid place-items-center min-h-[70vh] p-6">
+      <div className="w-full max-w-md">
         <form onSubmit={submit} noValidate>
           <Card>
             <Stack gap={5}>
@@ -178,10 +171,7 @@ function Login() {
                   Sign in
                 </Button>
                 {errors.root?.message ? (
-                  <div
-                    role="alert"
-                    className="text-sm text-[color:var(--color-pink)]"
-                  >
+                  <div role="alert" className="text-sm text-pink">
                     {errors.root.message}
                   </div>
                 ) : null}

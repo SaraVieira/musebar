@@ -191,10 +191,7 @@ function Register() {
                     Create account
                   </Button>
                   {errors.root?.message ? (
-                    <div
-                      role="alert"
-                      className="text-sm text-[color:var(--color-pink)]"
-                    >
+                    <div role="alert" className="text-sm text-pink">
                       {errors.root.message}
                     </div>
                   ) : null}

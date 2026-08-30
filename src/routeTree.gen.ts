@@ -14,7 +14,9 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ApiUploadsRouteImport } from './routes/api/uploads'
 import { Route as ProjectsIdRouteImport } from './routes/projects.$id'
+import { Route as ApiAssetsIdRouteImport } from './routes/api/assets/$id'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api.trpc.$'
 
@@ -43,9 +45,19 @@ const RegisterRoute = RegisterRouteImport.update({
   path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiUploadsRoute = ApiUploadsRouteImport.update({
+  id: '/api/uploads',
+  path: '/api/uploads',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProjectsIdRoute = ProjectsIdRouteImport.update({
   id: '/projects/$id',
   path: '/projects/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAssetsIdRoute = ApiAssetsIdRouteImport.update({
+  id: '/api/assets/$id',
+  path: '/api/assets/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
@@ -65,7 +77,9 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
   '/register': typeof RegisterRoute
+  '/api/uploads': typeof ApiUploadsRoute
   '/projects/$id': typeof ProjectsIdRoute
+  '/api/assets/$id': typeof ApiAssetsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
 }
@@ -75,7 +89,9 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
   '/register': typeof RegisterRoute
+  '/api/uploads': typeof ApiUploadsRoute
   '/projects/$id': typeof ProjectsIdRoute
+  '/api/assets/$id': typeof ApiAssetsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
 }
@@ -86,7 +102,9 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
   '/register': typeof RegisterRoute
+  '/api/uploads': typeof ApiUploadsRoute
   '/projects/$id': typeof ProjectsIdRoute
+  '/api/assets/$id': typeof ApiAssetsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
 }
@@ -98,7 +116,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/mcp'
     | '/register'
+    | '/api/uploads'
     | '/projects/$id'
+    | '/api/assets/$id'
     | '/api/auth/$'
     | '/api/trpc/$'
   fileRoutesByTo: FileRoutesByTo
@@ -108,7 +128,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/mcp'
     | '/register'
+    | '/api/uploads'
     | '/projects/$id'
+    | '/api/assets/$id'
     | '/api/auth/$'
     | '/api/trpc/$'
   id:
@@ -118,7 +140,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/mcp'
     | '/register'
+    | '/api/uploads'
     | '/projects/$id'
+    | '/api/assets/$id'
     | '/api/auth/$'
     | '/api/trpc/$'
   fileRoutesById: FileRoutesById
@@ -129,7 +153,9 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   McpRoute: typeof McpRoute
   RegisterRoute: typeof RegisterRoute
+  ApiUploadsRoute: typeof ApiUploadsRoute
   ProjectsIdRoute: typeof ProjectsIdRoute
+  ApiAssetsIdRoute: typeof ApiAssetsIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiTrpcSplatRoute: typeof ApiTrpcSplatRoute
 }
@@ -171,11 +197,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/uploads': {
+      id: '/api/uploads'
+      path: '/api/uploads'
+      fullPath: '/api/uploads'
+      preLoaderRoute: typeof ApiUploadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/projects/$id': {
       id: '/projects/$id'
       path: '/projects/$id'
       fullPath: '/projects/$id'
       preLoaderRoute: typeof ProjectsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/assets/$id': {
+      id: '/api/assets/$id'
+      path: '/api/assets/$id'
+      fullPath: '/api/assets/$id'
+      preLoaderRoute: typeof ApiAssetsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/auth/$': {
@@ -201,7 +241,9 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   McpRoute: McpRoute,
   RegisterRoute: RegisterRoute,
+  ApiUploadsRoute: ApiUploadsRoute,
   ProjectsIdRoute: ProjectsIdRoute,
+  ApiAssetsIdRoute: ApiAssetsIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiTrpcSplatRoute: ApiTrpcSplatRoute,
 }

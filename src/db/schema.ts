@@ -1,6 +1,7 @@
-import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
+import { sqliteTable, integer, text, blob } from "drizzle-orm/sqlite-core";
 import { relations, sql } from "drizzle-orm";
 import { index, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { size } from "zod";
 
 export const user = sqliteTable("user", {
   id: text("id").primaryKey(),
@@ -130,3 +131,27 @@ export const Projects = sqliteTable("projects", {
     sql`(unixepoch())`,
   ),
 });
+
+export const Assets = sqliteTable(
+  "assets",
+  {
+    id: text("id").primaryKey(),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => Projects.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    mimeType: text("mime_type").notNull(),
+    size: integer("size").notNull(),
+    data: blob("data").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).default(
+      sql`(unixepoch())`,
+    ),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    index("assets_projectId_idx").on(table.projectId),
+    index("assets_userId_idx").on(table.userId),
+  ],
+);

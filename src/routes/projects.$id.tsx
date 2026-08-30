@@ -5,12 +5,9 @@ import {
   useRouter,
 } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 import { Button } from "#/components/pouf/Button";
 import { getSession } from "#/lib/auth-server";
-import { getProject, updateProjectContent } from "#/lib/projects-server";
-import { fetchLinkMetadata } from "#/lib/link-metadata-server";
-import { AssetRecordType } from "@tldraw/tlschema";
+import { getProject } from "#/lib/projects-server";
 import {
   NoteCardShapeUtil,
   type NoteCardShape,
@@ -20,14 +17,14 @@ import {
   Tldraw,
   TldrawUiMenuItem,
   createShapeId,
-  loadSnapshot,
   useIsToolSelected,
   useTools,
-  type Editor,
   type TLComponents,
   type TLUiOverrides,
 } from "tldraw";
 import "tldraw/tldraw.css";
+import { useTldraw } from "#/lib/hooks/use-tldraw";
+import { musebarAssetStore } from "#/lib/tldraw";
 
 const customShapeUtils = [NoteCardShapeUtil];
 
@@ -97,43 +94,10 @@ export const Route = createFileRoute("/projects/$id")({
   component: Board,
 });
 
-const SAVE_DEBOUNCE_MS = 800;
-
 function Board() {
   const { project } = Route.useLoaderData();
   const router = useRouter();
-  const [editor, setEditor] = useState<Editor | null>(null);
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (!editor) return;
-
-    if (project.content) {
-      try {
-        loadSnapshot(editor.store, JSON.parse(project.content));
-      } catch {
-        // Bad snapshot — start blank rather than crash.
-      }
-    }
-
-    const unsubscribe = editor.store.listen(
-      () => {
-        if (saveTimer.current) clearTimeout(saveTimer.current);
-        saveTimer.current = setTimeout(async () => {
-          const snapshot = editor.store.getStoreSnapshot();
-          await updateProjectContent({
-            data: { id: project.id, content: JSON.stringify(snapshot) },
-          });
-        }, SAVE_DEBOUNCE_MS);
-      },
-      { source: "user", scope: "document" },
-    );
-
-    return () => {
-      unsubscribe();
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-    };
-  }, [editor, project.id, project.content]);
+  const { onMount } = useTldraw({ project });
 
   return (
     <div className="flex flex-col h-screen">
@@ -153,26 +117,8 @@ function Board() {
           shapeUtils={customShapeUtils}
           overrides={uiOverrides}
           components={components}
-          onMount={(editor) => {
-            editor.registerExternalAssetHandler("url", async ({ url }) => {
-              const meta = await fetchLinkMetadata({ data: { url } });
-              console.log("[bookmark] scraped", url, meta);
-              return {
-                id: AssetRecordType.createId(),
-                typeName: "asset",
-                type: "bookmark",
-                props: {
-                  src: url,
-                  title: meta.title,
-                  description: meta.description,
-                  image: meta.image,
-                  favicon: meta.favicon,
-                },
-                meta: {},
-              };
-            });
-            setEditor(editor);
-          }}
+          assets={musebarAssetStore}
+          onMount={onMount}
         />
       </main>
     </div>
