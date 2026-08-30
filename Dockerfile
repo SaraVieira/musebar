@@ -5,6 +5,11 @@ RUN corepack enable && corepack prepare pnpm@10.33.2 --activate
 
 FROM base AS deps
 WORKDIR /app
+# python3/make/g++ are needed if better-sqlite3 falls back to building
+# from source (no prebuild for this platform).
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      python3 make g++ ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile --prod=false
 
@@ -12,7 +17,8 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN pnpm run generate-routes && pnpm run build
+RUN pnpm run generate-routes
+RUN pnpm run build
 
 FROM base AS runner
 WORKDIR /app
