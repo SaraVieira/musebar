@@ -13,20 +13,3 @@ export function readImageDims(file: File): Promise<{ w: number; h: number }> {
     img.src = url;
   });
 }
-
-export function readVideoDims(file: File): Promise<{ w: number; h: number }> {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const video = document.createElement("video");
-    video.preload = "metadata";
-    video.onloadedmetadata = () => {
-      resolve({ w: video.videoWidth, h: video.videoHeight });
-      URL.revokeObjectURL(url);
-    };
-    video.onerror = (err) => {
-      URL.revokeObjectURL(url);
-      reject(err);
-    };
-    video.src = url;
-  });
-}

@@ -89,7 +89,7 @@ export function useBoard(project: Project) {
   };
 }
 
-export function useAddNode() {
+function useAddNode() {
   const { setNodes, screenToFlowPosition } = useReactFlow();
   return useCallback(
     (node: Node, atScreen?: { x: number; y: number }) => {

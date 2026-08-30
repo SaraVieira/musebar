@@ -2,7 +2,7 @@ import { NodeResizer, type NodeProps, type Node } from "@xyflow/react";
 import { FileIcon } from "@react-symbols/icons/utils";
 import { NodeHandles } from "./node-handles";
 
-export interface FileNodeData {
+interface FileNodeData {
   src: string;
   name: string;
   mimeType: string;

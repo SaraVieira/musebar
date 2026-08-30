@@ -1,0 +1,156 @@
+import type { BookmarkNode } from "#/components/board/bookmark-node";
+import {
+  EMBED_DRAG_HANDLE_CLASS,
+  type EmbedNode,
+} from "#/components/board/embed-node";
+import type { FileNode } from "#/components/board/file-node";
+import type { FrameNode } from "#/components/board/frame-node";
+import type { ImageNode } from "#/components/board/image-node";
+import type { NoteNode } from "#/components/board/note";
+import type { TextNode } from "#/components/board/text-node";
+import type { TodoNode } from "#/components/board/todo-node";
+
+type XY = { x: number; y: number };
+
+export function makeNoteNode(center: XY): NoteNode {
+  const w = 240;
+  const h = 160;
+  return {
+    id: crypto.randomUUID(),
+    type: "note",
+    position: { x: center.x - w / 2, y: center.y - h / 2 },
+    width: w,
+    height: h,
+    data: {},
+  };
+}
+
+export function makeTodoNode(center: XY): TodoNode {
+  const w = 260;
+  const h = 200;
+  return {
+    id: crypto.randomUUID(),
+    type: "todo",
+    position: { x: center.x - w / 2, y: center.y - h / 2 },
+    width: w,
+    height: h,
+    data: { items: [{ id: crypto.randomUUID(), text: "", done: false }] },
+  };
+}
+
+export function makeTextNode(center: XY): TextNode {
+  const w = 200;
+  const h = 40;
+  return {
+    id: crypto.randomUUID(),
+    type: "text",
+    position: { x: center.x - w / 2, y: center.y - h / 2 },
+    width: w,
+    height: h,
+    data: {},
+  };
+}
+
+export function makeFrameNode(center: XY): FrameNode {
+  const w = 400;
+  const h = 300;
+  return {
+    id: crypto.randomUUID(),
+    type: "frame",
+    position: { x: center.x - w / 2, y: center.y - h / 2 },
+    width: w,
+    height: h,
+    data: {},
+    selectable: true,
+    draggable: true,
+  };
+}
+
+export function makeEmbedNode(
+  url: string,
+  center: XY,
+  embed: { src: string; w: number; h: number },
+): EmbedNode {
+  return {
+    id: crypto.randomUUID(),
+    type: "embed",
+    position: { x: center.x - embed.w / 2, y: center.y - embed.h / 2 },
+    width: embed.w,
+    height: embed.h,
+    dragHandle: `.${EMBED_DRAG_HANDLE_CLASS}`,
+    data: { src: embed.src, title: url },
+  };
+}
+
+export function makeBookmarkNode(
+  url: string,
+  center: XY,
+  meta: {
+    title: string;
+    description: string;
+    image: string;
+    favicon: string;
+  },
+): BookmarkNode {
+  const w = 280;
+  const h = 220;
+  return {
+    id: crypto.randomUUID(),
+    type: "bookmark",
+    position: { x: center.x - w / 2, y: center.y - h / 2 },
+    width: w,
+    height: h,
+    data: {
+      url,
+      title: meta.title,
+      description: meta.description,
+      image: meta.image,
+      favicon: meta.favicon,
+    },
+  };
+}
+
+export function makeImageNode(
+  center: XY,
+  offsetIndex: number,
+  file: { name: string },
+  uploaded: { src: string; mimeType: string },
+  dims: { w: number; h: number },
+): ImageNode {
+  const scale = Math.min(1, 320 / Math.max(dims.w, dims.h));
+  const w = Math.round(dims.w * scale);
+  const h = Math.round(dims.h * scale);
+  const offset = offsetIndex * 16;
+  return {
+    id: crypto.randomUUID(),
+    type: "image",
+    position: { x: center.x - w / 2 + offset, y: center.y - h / 2 + offset },
+    width: w,
+    height: h,
+    data: { src: uploaded.src, name: file.name, mimeType: uploaded.mimeType },
+  };
+}
+
+export function makeFileNode(
+  center: XY,
+  offsetIndex: number,
+  file: { name: string; size: number },
+  uploaded: { src: string; mimeType: string },
+): FileNode {
+  const w = 240;
+  const h = 96;
+  const offset = offsetIndex * 16;
+  return {
+    id: crypto.randomUUID(),
+    type: "file",
+    position: { x: center.x - w / 2 + offset, y: center.y - h / 2 + offset },
+    width: w,
+    height: h,
+    data: {
+      src: uploaded.src,
+      name: file.name,
+      mimeType: uploaded.mimeType || "application/octet-stream",
+      size: file.size,
+    },
+  };
+}

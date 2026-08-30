@@ -1,5 +1,10 @@
 import { useCallback, useRef } from "react";
-import { NodeResizer, useReactFlow, type NodeProps, type Node } from "@xyflow/react";
+import {
+  NodeResizer,
+  useReactFlow,
+  type NodeProps,
+  type Node,
+} from "@xyflow/react";
 import { CARD_COLORS, ColorPicker } from "./color-picker";
 import { NodeHandles } from "./node-handles";
 import { cn } from "#/lib/utils";
@@ -10,7 +15,7 @@ export interface TodoItem {
   done: boolean;
 }
 
-export interface TodoNodeData {
+interface TodoNodeData {
   title?: string;
   items?: TodoItem[];
   color?: string;
@@ -48,9 +53,7 @@ export function TodoNodeView({
   const setItems = (next: TodoItem[]) => updateNodeData(id, { items: next });
 
   const updateItem = (itemId: string, patch: Partial<TodoItem>) => {
-    setItems(
-      items.map((it) => (it.id === itemId ? { ...it, ...patch } : it)),
-    );
+    setItems(items.map((it) => (it.id === itemId ? { ...it, ...patch } : it)));
   };
 
   const addItemAfter = (itemId: string) => {
@@ -130,7 +133,9 @@ export function TodoNodeView({
               <input
                 type="checkbox"
                 checked={item.done}
-                onChange={(e) => updateItem(item.id, { done: e.target.checked })}
+                onChange={(e) =>
+                  updateItem(item.id, { done: e.target.checked })
+                }
                 className="size-4 shrink-0 cursor-pointer accent-gray-800"
               />
               <input

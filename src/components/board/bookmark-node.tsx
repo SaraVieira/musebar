@@ -1,7 +1,7 @@
 import { NodeResizer, type NodeProps, type Node } from "@xyflow/react";
 import { NodeHandles } from "./node-handles";
 
-export interface BookmarkNodeData {
+interface BookmarkNodeData {
   url: string;
   title: string;
   description: string;

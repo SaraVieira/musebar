@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as McpRouteImport } from './routes/mcp'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ApiUploadsRouteImport } from './routes/api/uploads'
 import { Route as ProjectsIdRouteImport } from './routes/projects.$id'
@@ -33,11 +32,6 @@ const DashboardRoute = DashboardRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const McpRoute = McpRouteImport.update({
-  id: '/mcp',
-  path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegisterRoute = RegisterRouteImport.update({
@@ -75,7 +69,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
-  '/mcp': typeof McpRoute
   '/register': typeof RegisterRoute
   '/api/uploads': typeof ApiUploadsRoute
   '/projects/$id': typeof ProjectsIdRoute
@@ -87,7 +80,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
-  '/mcp': typeof McpRoute
   '/register': typeof RegisterRoute
   '/api/uploads': typeof ApiUploadsRoute
   '/projects/$id': typeof ProjectsIdRoute
@@ -100,7 +92,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
-  '/mcp': typeof McpRoute
   '/register': typeof RegisterRoute
   '/api/uploads': typeof ApiUploadsRoute
   '/projects/$id': typeof ProjectsIdRoute
@@ -114,7 +105,6 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/login'
-    | '/mcp'
     | '/register'
     | '/api/uploads'
     | '/projects/$id'
@@ -126,7 +116,6 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/login'
-    | '/mcp'
     | '/register'
     | '/api/uploads'
     | '/projects/$id'
@@ -138,7 +127,6 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/login'
-    | '/mcp'
     | '/register'
     | '/api/uploads'
     | '/projects/$id'
@@ -151,7 +139,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
-  McpRoute: typeof McpRoute
   RegisterRoute: typeof RegisterRoute
   ApiUploadsRoute: typeof ApiUploadsRoute
   ProjectsIdRoute: typeof ProjectsIdRoute
@@ -181,13 +168,6 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mcp': {
-      id: '/mcp'
-      path: '/mcp'
-      fullPath: '/mcp'
-      preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/register': {
@@ -239,7 +219,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
-  McpRoute: McpRoute,
   RegisterRoute: RegisterRoute,
   ApiUploadsRoute: ApiUploadsRoute,
   ProjectsIdRoute: ProjectsIdRoute,

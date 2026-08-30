@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   createFileRoute,
   notFound,
@@ -12,36 +12,34 @@ import {
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
-  type Node,
   type NodeTypes,
-  type OnNodeDrag,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "#/components/ui/button";
 import { BoardSidebar } from "#/components/board/board-sidebar";
 import { UrlDialog } from "#/components/board/url-dialog";
+import { BookmarkNodeView } from "#/components/board/bookmark-node";
+import { EmbedNodeView } from "#/components/board/embed-node";
+import { FileNodeView } from "#/components/board/file-node";
+import { FrameNodeView } from "#/components/board/frame-node";
+import { ImageNodeView } from "#/components/board/image-node";
+import { NoteNodeView } from "#/components/board/note";
+import { TextNodeView } from "#/components/board/text-node";
+import { TodoNodeView } from "#/components/board/todo-node";
 import { getSession } from "#/lib/auth-server";
 import { getProject } from "#/lib/projects-server";
-import { fetchLinkMetadata } from "#/lib/link-metadata-server";
-import { NoteNodeView, type NoteNode } from "#/components/board/note-node";
-import { TodoNodeView, type TodoNode } from "#/components/board/todo-node";
-import { FileNodeView, type FileNode } from "#/components/board/file-node";
-import { ImageNodeView, type ImageNode } from "#/components/board/image-node";
 import {
-  BookmarkNodeView,
-  type BookmarkNode,
-} from "#/components/board/bookmark-node";
-import { TextNodeView, type TextNode } from "#/components/board/text-node";
-import { FrameNodeView, type FrameNode } from "#/components/board/frame-node";
-import {
-  EmbedNodeView,
-  EMBED_DRAG_HANDLE_CLASS,
-  detectEmbed,
-  type EmbedNode,
-} from "#/components/board/embed-node";
+  makeFrameNode,
+  makeNoteNode,
+  makeTextNode,
+  makeTodoNode,
+} from "#/lib/board/factories";
+import { useAddByUrl } from "#/lib/hooks/use-add-by-url";
+import { useAddFiles } from "#/lib/hooks/use-add-files";
 import { useBoard } from "#/lib/hooks/use-board";
-import { readImageDims } from "#/lib/media-dims";
+import { useBoardPaste } from "#/lib/hooks/use-board-paste";
+import { useFrameParenting } from "#/lib/hooks/use-frame-parenting";
 
 const nodeTypes: NodeTypes = {
   note: NoteNodeView,
@@ -100,153 +98,25 @@ function Board() {
     });
   }, [rf]);
 
-  const addNote = useCallback(() => {
-    const { x, y } = boardCenter();
-    const node: NoteNode = {
-      id: crypto.randomUUID(),
-      type: "note",
-      position: { x: x - 120, y: y - 80 },
-      width: 240,
-      height: 160,
-      data: {},
-    };
-    setNodes((ns) => [...ns, node]);
-  }, [boardCenter, setNodes]);
+  const addByUrl = useAddByUrl(setNodes);
+  const addFiles = useAddFiles(setNodes, uploadFile);
+  const onNodeDragStop = useFrameParenting(setNodes);
 
-  const addTodo = useCallback(() => {
-    const { x, y } = boardCenter();
-    const node: TodoNode = {
-      id: crypto.randomUUID(),
-      type: "todo",
-      position: { x: x - 130, y: y - 100 },
-      width: 260,
-      height: 200,
-      data: { items: [{ id: crypto.randomUUID(), text: "", done: false }] },
-    };
-    setNodes((ns) => [...ns, node]);
-  }, [boardCenter, setNodes]);
-
-  const addText = useCallback(() => {
-    const { x, y } = boardCenter();
-    const node: TextNode = {
-      id: crypto.randomUUID(),
-      type: "text",
-      position: { x: x - 100, y: y - 20 },
-      width: 200,
-      height: 40,
-      data: {},
-    };
-    setNodes((ns) => [...ns, node]);
-  }, [boardCenter, setNodes]);
-
-  const addFrame = useCallback(() => {
-    const { x, y } = boardCenter();
-    const node: FrameNode = {
-      id: crypto.randomUUID(),
-      type: "frame",
-      position: { x: x - 200, y: y - 150 },
-      width: 400,
-      height: 300,
-      data: {},
-      selectable: true,
-      draggable: true,
-    };
-    setNodes((ns) => [node, ...ns]);
-  }, [boardCenter, setNodes]);
-
-  const handleUrl = useCallback(
-    async (url: string, at: { x: number; y: number }) => {
-      const embed = detectEmbed(url);
-      if (embed) {
-        const node: EmbedNode = {
-          id: crypto.randomUUID(),
-          type: "embed",
-          position: { x: at.x - embed.w / 2, y: at.y - embed.h / 2 },
-          width: embed.w,
-          height: embed.h,
-          dragHandle: `.${EMBED_DRAG_HANDLE_CLASS}`,
-          data: { src: embed.src, title: url },
-        };
-        setNodes((ns) => [...ns, node]);
-        return;
-      }
-      try {
-        const meta = await fetchLinkMetadata({ data: { url } });
-        const node: BookmarkNode = {
-          id: crypto.randomUUID(),
-          type: "bookmark",
-          position: { x: at.x - 140, y: at.y - 100 },
-          width: 280,
-          height: 220,
-          data: {
-            url,
-            title: meta.title,
-            description: meta.description,
-            image: meta.image,
-            favicon: meta.favicon,
-          },
-        };
-        setNodes((ns) => [...ns, node]);
-      } catch (err) {
-        console.error("[board] bookmark failed", err);
-      }
-    },
-    [setNodes],
+  const addNote = useCallback(
+    () => setNodes((ns) => [...ns, makeNoteNode(boardCenter())]),
+    [boardCenter, setNodes],
   );
-
-  const handleFiles = useCallback(
-    async (files: File[], at: { x: number; y: number }) => {
-      const toAdd: Node[] = [];
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        try {
-          const uploaded = await uploadFile(file);
-          const offset = i * 16;
-          if (uploaded.mimeType.startsWith("image/")) {
-            const { w, h } = await readImageDims(file).catch(() => ({
-              w: 240,
-              h: 180,
-            }));
-            const scale = Math.min(1, 320 / Math.max(w, h));
-            const node: ImageNode = {
-              id: crypto.randomUUID(),
-              type: "image",
-              position: {
-                x: at.x - (w * scale) / 2 + offset,
-                y: at.y - (h * scale) / 2 + offset,
-              },
-              width: Math.round(w * scale),
-              height: Math.round(h * scale),
-              data: {
-                src: uploaded.src,
-                name: file.name,
-                mimeType: uploaded.mimeType,
-              },
-            };
-            toAdd.push(node);
-          } else {
-            const node: FileNode = {
-              id: crypto.randomUUID(),
-              type: "file",
-              position: { x: at.x - 120 + offset, y: at.y - 48 + offset },
-              width: 240,
-              height: 96,
-              data: {
-                src: uploaded.src,
-                name: file.name,
-                mimeType: uploaded.mimeType || "application/octet-stream",
-                size: file.size,
-              },
-            };
-            toAdd.push(node);
-          }
-        } catch (err) {
-          console.error("[board] upload failed", err);
-        }
-      }
-      if (toAdd.length > 0) setNodes((ns) => [...ns, ...toAdd]);
-    },
-    [uploadFile, setNodes],
+  const addTodo = useCallback(
+    () => setNodes((ns) => [...ns, makeTodoNode(boardCenter())]),
+    [boardCenter, setNodes],
+  );
+  const addText = useCallback(
+    () => setNodes((ns) => [...ns, makeTextNode(boardCenter())]),
+    [boardCenter, setNodes],
+  );
+  const addFrame = useCallback(
+    () => setNodes((ns) => [makeFrameNode(boardCenter()), ...ns]),
+    [boardCenter, setNodes],
   );
 
   const onDrop = useCallback(
@@ -254,126 +124,18 @@ function Board() {
       e.preventDefault();
       const at = rf.screenToFlowPosition({ x: e.clientX, y: e.clientY });
       const files = Array.from(e.dataTransfer?.files ?? []);
+      if (files.length > 0) return addFiles(files, at);
       const url =
         e.dataTransfer?.getData("text/uri-list") ||
         e.dataTransfer?.getData("text/plain");
-      if (files.length > 0) return handleFiles(files, at);
       if (url && /^https?:\/\//i.test(url.trim())) {
-        return handleUrl(url.trim().split(/\s+/)[0], at);
+        return addByUrl(url.trim().split(/\s+/)[0], at);
       }
     },
-    [rf, handleFiles, handleUrl],
+    [rf, addFiles, addByUrl],
   );
 
-  // Paste handler: files → upload, URL → bookmark/embed. Attached to the
-  // window so it fires regardless of what has focus on the canvas.
-  useEffect(() => {
-    function isEditableTarget(t: EventTarget | null) {
-      if (!(t instanceof HTMLElement)) return false;
-      if (t.isContentEditable) return true;
-      const tag = t.tagName;
-      return tag === "INPUT" || tag === "TEXTAREA";
-    }
-
-    async function onPaste(e: ClipboardEvent) {
-      if (!e.clipboardData) return;
-      // Don't hijack pastes into text fields, editors, checkboxes, etc.
-      if (isEditableTarget(e.target)) return;
-
-      const at = boardCenter();
-
-      const files = Array.from(e.clipboardData.files ?? []);
-      if (files.length > 0) {
-        e.preventDefault();
-        await handleFiles(files, at);
-        return;
-      }
-
-      const url =
-        e.clipboardData.getData("text/uri-list") ||
-        e.clipboardData.getData("text/plain");
-      if (url && /^https?:\/\//i.test(url.trim())) {
-        e.preventDefault();
-        await handleUrl(url.trim().split(/\s+/)[0], at);
-      }
-    }
-
-    window.addEventListener("paste", onPaste);
-    return () => window.removeEventListener("paste", onPaste);
-  }, [boardCenter, handleFiles, handleUrl]);
-
-  // When a node is dropped on top of a frame, adopt it as a child of that
-  // frame. When dragged out of its current frame parent, detach. Frames
-  // themselves are never re-parented.
-  const onNodeDragStop: OnNodeDrag = useCallback(
-    (_e, dragged) => {
-      if (dragged.type === "frame") return;
-      const all = rf.getNodes();
-
-      const absPos = (n: Node): { x: number; y: number } => {
-        if (!n.parentId) return n.position;
-        const parent = all.find((p) => p.id === n.parentId);
-        if (!parent) return n.position;
-        const pa = absPos(parent);
-        return { x: pa.x + n.position.x, y: pa.y + n.position.y };
-      };
-
-      const dragAbs = absPos(dragged);
-      const w = dragged.width ?? 0;
-      const h = dragged.height ?? 0;
-      const cx = dragAbs.x + w / 2;
-      const cy = dragAbs.y + h / 2;
-
-      let target: Node | null = null;
-      for (const n of all) {
-        if (n.type !== "frame" || n.id === dragged.id) continue;
-        const fa = absPos(n);
-        const fw = n.width ?? 0;
-        const fh = n.height ?? 0;
-        if (cx >= fa.x && cx <= fa.x + fw && cy >= fa.y && cy <= fa.y + fh) {
-          target = n; // last match wins → topmost frame at that point
-        }
-      }
-
-      const currentParentId = dragged.parentId ?? null;
-      const targetParentId = target?.id ?? null;
-      if (currentParentId === targetParentId) return;
-
-      setNodes((nodes) => {
-        const updated = nodes.map((n): Node => {
-          if (n.id !== dragged.id) return n;
-          if (target) {
-            const targetAbs = absPos(target);
-            return {
-              ...n,
-              parentId: target.id,
-              extent: undefined,
-              position: {
-                x: dragAbs.x - targetAbs.x,
-                y: dragAbs.y - targetAbs.y,
-              },
-            };
-          }
-          return { ...n, parentId: undefined, position: dragAbs };
-        });
-
-        // React Flow requires parents to appear before their children in the
-        // array. If we just adopted `dragged`, make sure it comes after its
-        // new parent.
-        if (target) {
-          const parentIdx = updated.findIndex((n) => n.id === target.id);
-          const childIdx = updated.findIndex((n) => n.id === dragged.id);
-          if (childIdx < parentIdx) {
-            const [child] = updated.splice(childIdx, 1);
-            updated.splice(parentIdx, 0, child);
-          }
-        }
-
-        return updated;
-      });
-    },
-    [rf, setNodes],
-  );
+  useBoardPaste({ getCenter: boardCenter, onFiles: addFiles, onUrl: addByUrl });
 
   const defaultEdgeOptions = useMemo(
     () => ({
@@ -404,7 +166,7 @@ function Board() {
           onAddText={addText}
           onAddFrame={addFrame}
           onAddUrl={() => setUrlOpen(true)}
-          onAddFiles={(files) => handleFiles(files, boardCenter())}
+          onAddFiles={(files) => addFiles(files, boardCenter())}
         />
         <div
           ref={wrapperRef}
@@ -435,7 +197,7 @@ function Board() {
       <UrlDialog
         open={urlOpen}
         onOpenChange={setUrlOpen}
-        onSubmit={(url) => handleUrl(url, boardCenter())}
+        onSubmit={(url) => addByUrl(url, boardCenter())}
       />
     </div>
   );

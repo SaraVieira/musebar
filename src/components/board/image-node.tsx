@@ -1,7 +1,7 @@
 import { NodeResizer, type NodeProps, type Node } from "@xyflow/react";
 import { NodeHandles } from "./node-handles";
 
-export interface ImageNodeData {
+interface ImageNodeData {
   src: string;
   name: string;
   mimeType: string;

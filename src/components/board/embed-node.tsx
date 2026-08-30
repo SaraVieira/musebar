@@ -4,7 +4,7 @@ import { NodeHandles } from "./node-handles";
 
 export const EMBED_DRAG_HANDLE_CLASS = "embed-drag-handle";
 
-export interface EmbedNodeData {
+interface EmbedNodeData {
   src: string;
   title?: string;
   [key: string]: unknown;
@@ -49,7 +49,9 @@ export function EmbedNodeView({
 }
 
 // Return an embeddable URL if the given URL is a supported service.
-export function detectEmbed(url: string): { src: string; w: number; h: number } | null {
+export function detectEmbed(
+  url: string,
+): { src: string; w: number; h: number } | null {
   const yt = url.match(
     /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/,
   );

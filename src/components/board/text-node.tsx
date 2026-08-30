@@ -1,8 +1,13 @@
 import { useState } from "react";
-import { NodeResizer, useReactFlow, type NodeProps, type Node } from "@xyflow/react";
+import {
+  NodeResizer,
+  useReactFlow,
+  type NodeProps,
+  type Node,
+} from "@xyflow/react";
 import { NodeHandles } from "./node-handles";
 
-export interface TextNodeData {
+interface TextNodeData {
   text?: string;
   color?: string;
   size?: number;
