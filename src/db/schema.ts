@@ -1,7 +1,6 @@
 import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
 import { relations, sql } from "drizzle-orm";
 import { index, uniqueIndex } from "drizzle-orm/sqlite-core";
-import { describe } from "zod";
 
 export const user = sqliteTable("user", {
   id: text("id").primaryKey(),
@@ -120,6 +119,7 @@ export const Projects = sqliteTable("projects", {
   name: text("name").notNull(),
   description: text("description"),
   content: text("content"),
+  public: integer("public", { mode: "boolean" }).default(false).notNull(),
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),

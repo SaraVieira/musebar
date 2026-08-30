@@ -1,3 +1,4 @@
+import "@tanstack/react-start/server-only";
 import { env } from "#/env";
 import { betterAuth } from "better-auth";
 import { APIError } from "better-auth/api";

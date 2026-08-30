@@ -1,0 +1,1 @@
+ALTER TABLE `projects` ADD `public` integer DEFAULT false NOT NULL;

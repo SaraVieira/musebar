@@ -15,6 +15,13 @@
       "when": 1788075809689,
       "tag": "0001_solid_stingray",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1788076140031,
+      "tag": "0002_big_eddie_brock",
+      "breakpoints": true
     }
   ]
 }
