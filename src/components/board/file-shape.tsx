@@ -89,56 +89,30 @@ export class FileCardShapeUtil extends ShapeUtil<FileCardShape> {
         style={{
           width: shape.props.w,
           height: shape.props.h,
-          background: "#ffffff",
-          borderRadius: 12,
-          boxShadow: "0 6px 16px rgba(0,0,0,0.12)",
-          padding: 12,
           pointerEvents: "all",
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          overflow: "hidden",
-          color: "#1f2937",
-          fontFamily: "inherit",
-          fontSize: 13,
         }}
       >
-        <div style={{ flexShrink: 0, width: 40, height: 40 }}>
-          <FileIcon fileName={shape.props.name} autoAssign width={40} height={40} />
-        </div>
-        <a
-          href={shape.props.src}
-          download={shape.props.name}
-          target="_blank"
-          rel="noopener noreferrer"
-          onPointerDown={(e) => e.stopPropagation()}
-          className="tl-file-card-link"
-          style={{
-            minWidth: 0,
-            flex: 1,
-            color: "inherit",
-            textDecoration: "none",
-            display: "flex",
-            flexDirection: "column",
-            gap: 2,
-          }}
-        >
-          <div
-            style={{
-              fontWeight: 600,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
+        <div className="flex size-full items-center gap-3 overflow-hidden rounded-xl bg-white p-3 text-[13px] text-gray-800 shadow-md">
+          <div className="size-10 shrink-0">
+            <FileIcon fileName={shape.props.name} autoAssign width={40} height={40} />
+          </div>
+          <a
+            href={shape.props.src}
+            download={shape.props.name}
+            target="_blank"
+            rel="noopener noreferrer"
+            onPointerDown={(e) => e.stopPropagation()}
+            className="group flex min-w-0 flex-1 flex-col gap-0.5 text-inherit no-underline"
           >
-            {shape.props.name}
-          </div>
-          <div style={{ opacity: 0.6, fontSize: 12 }}>
-            {fileTypeLabel(shape.props.name, shape.props.mimeType)} ·{" "}
-            {formatBytes(shape.props.size)}
-          </div>
-        </a>
-        <style>{`.tl-file-card-link:hover > div:first-child { text-decoration: underline; }`}</style>
+            <div className="truncate font-semibold group-hover:underline">
+              {shape.props.name}
+            </div>
+            <div className="text-xs opacity-60">
+              {fileTypeLabel(shape.props.name, shape.props.mimeType)} ·{" "}
+              {formatBytes(shape.props.size)}
+            </div>
+          </a>
+        </div>
       </HTMLContainer>
     );
   }

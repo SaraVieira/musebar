@@ -14,6 +14,7 @@ import {
 import { EditorContent, useEditor, generateHTML } from "@tiptap/react";
 import { StarterKit } from "@tiptap/starter-kit";
 import type { Editor, JSONContent } from "@tiptap/react";
+import { cn } from "#/lib/utils";
 
 const EXTENSIONS = [
   StarterKit.configure({
@@ -41,6 +42,16 @@ function textToDoc(text: string): JSONContent {
     })),
   };
 }
+
+export const NOTE_COLORS = [
+  { name: "Yellow", value: "#ffe58a" },
+  { name: "Mint", value: "#a8f0d0" },
+  { name: "Blue", value: "#9ec8ff" },
+  { name: "Purple", value: "#c9a8ff" },
+  { name: "Pink", value: "#ffb3d1" },
+  { name: "Orange", value: "#ffb38a" },
+  { name: "White", value: "#ffffff" },
+] as const;
 
 export interface NoteCardShapeProps {
   w: number;
@@ -85,7 +96,7 @@ export class NoteCardShapeUtil extends ShapeUtil<NoteCardShape> {
   static override migrations = migrations;
 
   override getDefaultProps(): NoteCardShapeProps {
-    return { w: 240, h: 160, content: EMPTY_DOC, color: "#fef3c7" };
+    return { w: 240, h: 160, content: EMPTY_DOC, color: NOTE_COLORS[0].value };
   }
 
   override canEdit = () => true;
@@ -113,15 +124,26 @@ export class NoteCardShapeUtil extends ShapeUtil<NoteCardShape> {
 
   override component(shape: NoteCardShape) {
     const isEditing = this.editor.getEditingShapeId() === shape.id;
+    const isSelected = this.editor
+      .getSelectedShapeIds()
+      .includes(shape.id);
     return (
       <NoteCardBody
         shape={shape}
         isEditing={isEditing}
+        isSelected={isSelected}
         onChange={(content) =>
           this.editor.updateShape({
             id: shape.id,
             type: "note-card",
             props: { content },
+          })
+        }
+        onColorChange={(color) =>
+          this.editor.updateShape({
+            id: shape.id,
+            type: "note-card",
+            props: { color },
           })
         }
       />
@@ -132,10 +154,18 @@ export class NoteCardShapeUtil extends ShapeUtil<NoteCardShape> {
 interface NoteCardBodyProps {
   shape: NoteCardShape;
   isEditing: boolean;
+  isSelected: boolean;
   onChange: (content: JSONContent) => void;
+  onColorChange: (color: string) => void;
 }
 
-function NoteCardBody({ shape, isEditing, onChange }: NoteCardBodyProps) {
+function NoteCardBody({
+  shape,
+  isEditing,
+  isSelected,
+  onChange,
+  onColorChange,
+}: NoteCardBodyProps) {
   const html = useMemo(() => {
     try {
       return generateHTML(shape.props.content, EXTENSIONS);
@@ -146,33 +176,77 @@ function NoteCardBody({ shape, isEditing, onChange }: NoteCardBodyProps) {
 
   return (
     <HTMLContainer
+      className="relative overflow-visible"
       style={{
         width: shape.props.w,
         height: shape.props.h,
-        background: shape.props.color,
-        borderRadius: 12,
-        boxShadow: "0 6px 16px rgba(0,0,0,0.12)",
-        padding: 12,
         pointerEvents: "all",
-        fontFamily: "inherit",
-        fontSize: 14,
-        color: "#1f2937",
-        overflow: "auto",
       }}
     >
-      {isEditing ? (
-        <NoteEditor
-          shapeId={shape.id}
-          initialContent={shape.props.content}
-          onChange={onChange}
+      {isSelected ? (
+        <ColorPicker
+          selected={shape.props.color}
+          onSelect={onColorChange}
         />
-      ) : (
-        <div
-          className="note-card-content"
-          dangerouslySetInnerHTML={{ __html: html || placeholderHtml() }}
-        />
-      )}
+      ) : null}
+      <div
+        className="size-full overflow-auto rounded-xl p-3 text-sm text-gray-800 shadow-md"
+        style={{ background: shape.props.color }}
+      >
+        {isEditing ? (
+          <NoteEditor
+            shapeId={shape.id}
+            initialContent={shape.props.content}
+            onChange={onChange}
+          />
+        ) : (
+          <div
+            className="note-card-content"
+            dangerouslySetInnerHTML={{ __html: html || placeholderHtml() }}
+          />
+        )}
+      </div>
     </HTMLContainer>
+  );
+}
+
+function ColorPicker({
+  selected,
+  onSelect,
+}: {
+  selected: string;
+  onSelect: (color: string) => void;
+}) {
+  return (
+    <div
+      onPointerDown={(e) => e.stopPropagation()}
+      className="absolute bottom-full left-1/2 z-10 mb-2 flex -translate-x-1/2 gap-1 rounded-full bg-white p-1.5 shadow-lg"
+    >
+      {NOTE_COLORS.map((c) => {
+        const isSelected = c.value === selected;
+        const isWhite = c.value === "#ffffff";
+        return (
+          <button
+            key={c.value}
+            type="button"
+            title={c.name}
+            aria-label={c.name}
+            onPointerDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onSelect(c.value);
+            }}
+            style={{ background: c.value }}
+            className={cn(
+              "size-5 cursor-pointer rounded-full border-0 p-0 outline-none",
+              isWhite && "border border-black/15",
+              isSelected &&
+                "ring-2 ring-gray-900 ring-offset-2 ring-offset-white",
+            )}
+          />
+        );
+      })}
+    </div>
   );
 }
 
@@ -207,7 +281,7 @@ function NoteEditor({ initialContent, onChange }: NoteEditorProps) {
     <div
       onPointerDown={(e) => e.stopPropagation()}
       onKeyDown={(e) => e.stopPropagation()}
-      style={{ height: "100%" }}
+      className="h-full"
     >
       <NoteToolbar editor={editor} />
       <EditorContent editor={editor} />
@@ -223,41 +297,17 @@ function NoteToolbar({ editor }: { editor: Editor }) {
         e.preventDefault();
         onClick();
       }}
-      style={{
-        border: "none",
-        background: active ? "rgba(0,0,0,0.12)" : "transparent",
-        borderRadius: 4,
-        padding: "2px 6px",
-        cursor: "pointer",
-        fontSize: 12,
-        fontFamily: "inherit",
-        color: "inherit",
-      }}
+      className={cn(
+        "cursor-pointer rounded border-0 px-1.5 py-0.5 text-xs text-inherit outline-none",
+        active ? "bg-black/10" : "bg-transparent",
+      )}
     >
       {label}
     </button>
   );
 
   return (
-    <div
-      style={{
-        display: "flex",
-        gap: 2,
-        marginBottom: 6,
-        opacity: 0.9,
-        position: "sticky",
-        top: -12,
-        marginTop: -12,
-        marginLeft: -12,
-        marginRight: -12,
-        padding: "8px 12px",
-        background:
-          "linear-gradient(to bottom, rgba(255,255,255,0.85), rgba(255,255,255,0.6))",
-        backdropFilter: "blur(4px)",
-        borderBottom: "1px solid rgba(0,0,0,0.08)",
-        zIndex: 1,
-      }}
-    >
+    <div className="sticky -top-3 z-[1] -mx-3 -mt-3 mb-1.5 flex gap-0.5 border-b border-black/5 bg-gradient-to-b from-white/85 to-white/60 px-3 py-2 opacity-90 backdrop-blur-sm">
       {btn("B", editor.isActive("bold"), () =>
         editor.chain().focus().toggleBold().run(),
       )}
