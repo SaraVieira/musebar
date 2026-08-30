@@ -1,17 +1,26 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { Card } from "#/components/pouf/surface";
-import { Stack, Row } from "#/components/pouf/layout";
-import { Heading, Text } from "#/components/pouf/text";
-import { Field, Input } from "#/components/pouf/Input";
-import { Button } from "#/components/pouf/Button";
-import { Separator } from "#/components/pouf/separator";
-import { Blob } from "#/components/pouf/media";
+import { Button } from "#/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "#/components/ui/card";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  FieldSeparator,
+} from "#/components/ui/field";
+import { Input } from "#/components/ui/input";
 import { authClient } from "#/lib/auth-client";
 import { EMAIL_RE } from "#/lib/constants";
 import { anyUserExists, getAuthProviders } from "#/lib/user-server";
+import { IconBrandGithub } from "@tabler/icons-react";
 
 export const Route = createFileRoute("/login")({
   loader: async () => {
@@ -29,11 +38,8 @@ interface LoginValues {
   password: string;
 }
 
-const DEFAULT_VALUES: LoginValues = { email: "", password: "" };
-
 function Login() {
   const { hasUser, providers } = Route.useLoaderData();
-  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const {
     control,
@@ -41,15 +47,14 @@ function Login() {
     setError,
     formState: { errors, isSubmitting },
   } = useForm<LoginValues>({
-    defaultValues: DEFAULT_VALUES,
+    defaultValues: { email: "", password: "" },
     mode: "onSubmit",
     reValidateMode: "onChange",
     shouldFocusError: true,
   });
 
-  const submit = handleSubmit(async (values) => {
+  const submit = handleSubmit(async ({ email, password }) => {
     try {
-      const { email, password } = values;
       const { error } = await authClient.signIn.email({ email, password });
       if (error) throw new Error(error.message ?? "Invalid email or password.");
       await router.invalidate();
@@ -73,137 +78,123 @@ function Login() {
       if (error) throw new Error(error.message ?? "GitHub sign-in failed.");
     } catch (err) {
       setError("root", {
-        message:
-          err instanceof Error
-            ? err.message
-            : "GitHub sign-in failed. Try again.",
+        message: err instanceof Error ? err.message : "GitHub sign-in failed.",
       });
     }
   }
 
   return (
-    <div className="grid place-items-center min-h-[70vh] p-6">
-      <div className="w-full max-w-md">
-        <form onSubmit={submit} noValidate>
-          <Card>
-            <Stack gap={5}>
-              <Stack gap={3}>
-                <Blob icon="lock" tone="purple" />
-                <Stack gap={1}>
-                  <Heading level={2}>Welcome back</Heading>
-                  <Text size="sm" muted>
-                    Sign in to your account.
-                  </Text>
-                </Stack>
-              </Stack>
-
-              <Stack gap={4}>
-                <Field label="Email" error={errors.email?.message}>
-                  {(id, describedBy) => (
-                    <Controller
-                      name="email"
-                      control={control}
-                      rules={{
-                        required: "Email is required.",
-                        pattern: {
-                          value: EMAIL_RE,
-                          message: "Enter a valid email address.",
-                        },
-                      }}
-                      render={({ field }) => (
-                        <Input
-                          ref={field.ref}
-                          id={id}
-                          name={field.name}
-                          describedBy={describedBy}
-                          type="email"
-                          value={field.value}
-                          onChange={field.onChange}
-                          onBlur={field.onBlur}
-                          placeholder="you@example.com…"
-                          autoComplete="email"
-                          inputMode="email"
-                          autoCapitalize="none"
-                          spellCheck={false}
-                          required
-                          invalid={!!errors.email}
-                        />
-                      )}
-                    />
-                  )}
+    <div className="bg-muted flex min-h-screen items-center justify-center p-6">
+      <div className="w-full max-w-sm">
+        <Card>
+          <CardHeader className="text-center">
+            <CardTitle className="text-xl">Welcome back</CardTitle>
+            <CardDescription>Sign in to continue to your board</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={submit} noValidate>
+              <FieldGroup>
+                <Field data-invalid={!!errors.email}>
+                  <FieldLabel htmlFor="email">Email</FieldLabel>
+                  <Controller
+                    name="email"
+                    control={control}
+                    rules={{
+                      required: "Email is required.",
+                      pattern: {
+                        value: EMAIL_RE,
+                        message: "Enter a valid email address.",
+                      },
+                    }}
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        id="email"
+                        type="email"
+                        placeholder="you@example.com"
+                        autoComplete="email"
+                        aria-invalid={!!errors.email}
+                        required
+                      />
+                    )}
+                  />
+                  {errors.email ? (
+                    <FieldDescription className="text-destructive">
+                      {errors.email.message}
+                    </FieldDescription>
+                  ) : null}
                 </Field>
-                <Field label="Password" error={errors.password?.message}>
-                  {(id, describedBy) => (
-                    <Row gap={2} wrap={false}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <Controller
-                          name="password"
-                          control={control}
-                          rules={{
-                            required: "Password is required.",
-                            minLength: {
-                              value: 8,
-                              message: "Use at least 8 characters.",
-                            },
-                          }}
-                          render={({ field }) => (
-                            <Input
-                              ref={field.ref}
-                              id={id}
-                              name={field.name}
-                              describedBy={describedBy}
-                              type={showPassword ? "text" : "password"}
-                              value={field.value}
-                              onChange={field.onChange}
-                              onBlur={field.onBlur}
-                              placeholder="••••••••…"
-                              autoComplete="current-password"
-                              required
-                              invalid={!!errors.password}
-                            />
-                          )}
-                        />
-                      </div>
-                      <Button
-                        variant="quiet"
-                        onClick={() => setShowPassword((s) => !s)}
-                      >
-                        {showPassword ? "Hide" : "Show"}
-                      </Button>
-                    </Row>
-                  )}
-                </Field>
-                <Button block type="submit" loading={isSubmitting}>
-                  Sign in
-                </Button>
-                {errors.root?.message ? (
-                  <div role="alert" className="text-sm text-pink">
-                    {errors.root.message}
-                  </div>
-                ) : null}
-              </Stack>
 
-              {providers.github ? (
-                <>
-                  <Separator />
-                  <Button block variant="quiet" onClick={signInWithGitHub}>
-                    Continue with GitHub
+                <Field data-invalid={!!errors.password}>
+                  <FieldLabel htmlFor="password">Password</FieldLabel>
+                  <Controller
+                    name="password"
+                    control={control}
+                    rules={{
+                      required: "Password is required.",
+                      minLength: {
+                        value: 8,
+                        message: "Use at least 8 characters.",
+                      },
+                    }}
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        id="password"
+                        type="password"
+                        autoComplete="current-password"
+                        aria-invalid={!!errors.password}
+                        required
+                      />
+                    )}
+                  />
+                  {errors.password ? (
+                    <FieldDescription className="text-destructive">
+                      {errors.password.message}
+                    </FieldDescription>
+                  ) : null}
+                </Field>
+
+                <Field>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? "Signing in…" : "Sign in"}
                   </Button>
-                </>
-              ) : null}
-              {hasUser ? null : (
-                <Row justify="center">
-                  <Text size="sm" muted>
-                    New here?{" "}
-                    <a href="/register" className="underline">
-                      Create an account
-                    </a>
-                  </Text>
-                </Row>
-              )}
-            </Stack>
-          </Card>
-        </form>
+                  {errors.root?.message ? (
+                    <FieldDescription className="text-destructive text-center">
+                      {errors.root.message}
+                    </FieldDescription>
+                  ) : null}
+                </Field>
+
+                {providers.github ? (
+                  <>
+                    <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
+                      Or
+                    </FieldSeparator>
+                    <Field>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={signInWithGitHub}
+                      >
+                        <IconBrandGithub aria-hidden />
+                        Continue with GitHub
+                      </Button>
+                    </Field>
+                  </>
+                ) : null}
+              </FieldGroup>
+            </form>
+          </CardContent>
+        </Card>
+        {hasUser ? null : (
+          <FieldDescription className="mt-4 text-center">
+            New here?{" "}
+            <a href="/register" className="underline underline-offset-4">
+              Create an account
+            </a>
+          </FieldDescription>
+        )}
       </div>
     </div>
   );
