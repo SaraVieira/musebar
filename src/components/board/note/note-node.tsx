@@ -9,6 +9,7 @@ import { generateHTML } from "@tiptap/react";
 import type { JSONContent } from "@tiptap/react";
 import { CARD_COLORS, ColorPicker } from "../color-picker";
 import { NodeHandles } from "../node-handles";
+import { useBoardCommit } from "#/lib/board/history-context";
 import { EMPTY_NOTE_DOC, NOTE_EXTENSIONS } from "./extensions";
 import { NoteEditor } from "./note-editor";
 
@@ -28,6 +29,7 @@ export function NoteNodeView({
   height,
 }: NodeProps<NoteNode>) {
   const { updateNodeData } = useReactFlow();
+  const commit = useBoardCommit();
   const [editing, setEditing] = useState(false);
 
   const content = data.content ?? EMPTY_NOTE_DOC;
@@ -47,17 +49,24 @@ export function NoteNodeView({
         minWidth={160}
         minHeight={100}
         isVisible={selected}
+        onResizeStart={commit}
         lineClassName="!border-gray-900/40"
         handleClassName="!bg-white !border !border-gray-900/40 !size-2"
       />
       {selected ? (
         <ColorPicker
           selected={color}
-          onSelect={(c) => updateNodeData(id, { color: c })}
+          onSelect={(c) => {
+            commit();
+            updateNodeData(id, { color: c });
+          }}
         />
       ) : null}
       <div
-        onDoubleClick={() => setEditing(true)}
+        onDoubleClick={() => {
+          commit();
+          setEditing(true);
+        }}
         className="size-full overflow-auto rounded-xl p-3 text-sm text-gray-800 shadow-md"
         style={{ background: color }}
       >

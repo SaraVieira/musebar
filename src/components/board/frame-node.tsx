@@ -6,6 +6,7 @@ import {
   type Node,
 } from "@xyflow/react";
 import { NodeHandles } from "./node-handles";
+import { useBoardCommit } from "#/lib/board/history-context";
 
 interface FrameNodeData {
   title?: string;
@@ -22,6 +23,7 @@ export function FrameNodeView({
   height,
 }: NodeProps<FrameNode>) {
   const { updateNodeData } = useReactFlow();
+  const commit = useBoardCommit();
   const [editing, setEditing] = useState(false);
   const title = data.title ?? "";
 
@@ -31,6 +33,7 @@ export function FrameNodeView({
         minWidth={200}
         minHeight={120}
         isVisible={selected}
+        onResizeStart={commit}
         lineClassName="!border-gray-900/40"
         handleClassName="!bg-white !border !border-gray-900/40 !size-2"
       />
@@ -54,7 +57,10 @@ export function FrameNodeView({
         ) : (
           <button
             type="button"
-            onDoubleClick={() => setEditing(true)}
+            onDoubleClick={() => {
+              commit();
+              setEditing(true);
+            }}
             className="cursor-text border-0 bg-transparent p-0 text-xs font-medium text-gray-700"
           >
             {title || "Frame"}

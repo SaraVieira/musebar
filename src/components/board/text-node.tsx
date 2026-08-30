@@ -6,6 +6,7 @@ import {
   type Node,
 } from "@xyflow/react";
 import { NodeHandles } from "./node-handles";
+import { useBoardCommit } from "#/lib/board/history-context";
 
 interface TextNodeData {
   text?: string;
@@ -24,6 +25,7 @@ export function TextNodeView({
   height,
 }: NodeProps<TextNode>) {
   const { updateNodeData } = useReactFlow();
+  const commit = useBoardCommit();
   const [editing, setEditing] = useState(false);
 
   const text = data.text ?? "";
@@ -36,11 +38,15 @@ export function TextNodeView({
         minWidth={80}
         minHeight={30}
         isVisible={selected}
+        onResizeStart={commit}
         lineClassName="!border-gray-900/40"
         handleClassName="!bg-white !border !border-gray-900/40 !size-2"
       />
       <div
-        onDoubleClick={() => setEditing(true)}
+        onDoubleClick={() => {
+          commit();
+          setEditing(true);
+        }}
         onPointerDown={(e) => {
           if (editing) e.stopPropagation();
         }}

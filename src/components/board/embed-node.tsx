@@ -1,6 +1,7 @@
 import { GripHorizontal } from "lucide-react";
 import { NodeResizer, type NodeProps, type Node } from "@xyflow/react";
 import { NodeHandles } from "./node-handles";
+import { useBoardCommit } from "#/lib/board/history-context";
 
 export const EMBED_DRAG_HANDLE_CLASS = "embed-drag-handle";
 
@@ -18,6 +19,7 @@ export function EmbedNodeView({
   width,
   height,
 }: NodeProps<EmbedNode>) {
+  const commit = useBoardCommit();
   return (
     <div className="group relative size-full" style={{ width, height }}>
       <NodeResizer
@@ -25,6 +27,7 @@ export function EmbedNodeView({
         minHeight={140}
         isVisible={selected}
         keepAspectRatio
+        onResizeStart={commit}
         lineClassName="!border-gray-900/40"
         handleClassName="!bg-white !border !border-gray-900/40 !size-2"
       />

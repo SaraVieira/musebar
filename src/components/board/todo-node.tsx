@@ -7,6 +7,7 @@ import {
 } from "@xyflow/react";
 import { CARD_COLORS, ColorPicker } from "./color-picker";
 import { NodeHandles } from "./node-handles";
+import { useBoardCommit } from "#/lib/board/history-context";
 import { cn } from "#/lib/utils";
 
 export interface TodoItem {
@@ -36,6 +37,7 @@ export function TodoNodeView({
   height,
 }: NodeProps<TodoNode>) {
   const { updateNodeData } = useReactFlow();
+  const commit = useBoardCommit();
   const itemRefs = useRef<Map<string, HTMLInputElement>>(new Map());
 
   const items = data.items ?? [newItem()];
@@ -57,6 +59,7 @@ export function TodoNodeView({
   };
 
   const addItemAfter = (itemId: string) => {
+    commit();
     const idx = items.findIndex((it) => it.id === itemId);
     const item = newItem();
     const next = [...items];
@@ -67,6 +70,7 @@ export function TodoNodeView({
 
   const removeItem = (itemId: string) => {
     if (items.length === 1) return;
+    commit();
     const idx = items.findIndex((it) => it.id === itemId);
     const prev = items[idx - 1] ?? items[idx + 1];
     setItems(items.filter((it) => it.id !== itemId));
@@ -80,6 +84,7 @@ export function TodoNodeView({
   };
 
   const appendItem = () => {
+    commit();
     const item = newItem();
     setItems([...items, item]);
     requestAnimationFrame(() => itemRefs.current.get(item.id)?.focus());
@@ -93,13 +98,17 @@ export function TodoNodeView({
         minWidth={200}
         minHeight={120}
         isVisible={selected}
+        onResizeStart={commit}
         lineClassName="!border-gray-900/40"
         handleClassName="!bg-white !border !border-gray-900/40 !size-2"
       />
       {selected ? (
         <ColorPicker
           selected={color}
-          onSelect={(c) => updateNodeData(id, { color: c })}
+          onSelect={(c) => {
+            commit();
+            updateNodeData(id, { color: c });
+          }}
         />
       ) : null}
       <div
@@ -117,6 +126,7 @@ export function TodoNodeView({
             <input
               type="text"
               value={title}
+              onFocus={commit}
               onChange={(e) => updateNodeData(id, { title: e.target.value })}
               placeholder="Untitled list"
               className="min-w-0 flex-1 border-none bg-transparent text-sm font-semibold outline-none placeholder:text-gray-800/40"
@@ -133,15 +143,17 @@ export function TodoNodeView({
               <input
                 type="checkbox"
                 checked={item.done}
-                onChange={(e) =>
-                  updateItem(item.id, { done: e.target.checked })
-                }
+                onChange={(e) => {
+                  commit();
+                  updateItem(item.id, { done: e.target.checked });
+                }}
                 className="size-4 shrink-0 cursor-pointer accent-gray-800"
               />
               <input
                 ref={setItemRef(item.id)}
                 type="text"
                 value={item.text}
+                onFocus={commit}
                 onChange={(e) => updateItem(item.id, { text: e.target.value })}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {

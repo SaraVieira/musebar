@@ -15,7 +15,8 @@ import {
   type NodeTypes,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Redo2, Undo2 } from "lucide-react";
+import { BoardHistoryProvider } from "#/lib/board/history-context";
 import { Button } from "#/components/ui/button";
 import { BoardSidebar } from "#/components/board/board-sidebar";
 import { UrlDialog } from "#/components/board/url-dialog";
@@ -38,6 +39,7 @@ import {
 import { useAddByUrl } from "#/lib/hooks/use-add-by-url";
 import { useAddFiles } from "#/lib/hooks/use-add-files";
 import { useBoard } from "#/lib/hooks/use-board";
+import { useBoardHistory } from "#/lib/hooks/use-board-history";
 import { useBoardPaste } from "#/lib/hooks/use-board-paste";
 import { useFrameParenting } from "#/lib/hooks/use-frame-parenting";
 
@@ -82,12 +84,14 @@ function Board() {
     nodes,
     edges,
     setNodes,
+    setEdges,
     onNodesChange,
     onEdgesChange,
     onConnect,
     uploadFile,
   } = useBoard(project);
   const rf = useReactFlow();
+  const history = useBoardHistory(setNodes, setEdges);
 
   const boardCenter = useCallback(() => {
     const rect = wrapperRef.current?.getBoundingClientRect();
@@ -98,26 +102,57 @@ function Board() {
     });
   }, [rf]);
 
-  const addByUrl = useAddByUrl(setNodes);
-  const addFiles = useAddFiles(setNodes, uploadFile);
-  const onNodeDragStop = useFrameParenting(setNodes);
+  const rawAddByUrl = useAddByUrl(setNodes);
+  const rawAddFiles = useAddFiles(setNodes, uploadFile);
+  const rawOnNodeDragStop = useFrameParenting(setNodes);
 
-  const addNote = useCallback(
-    () => setNodes((ns) => [...ns, makeNoteNode(boardCenter())]),
-    [boardCenter, setNodes],
+  const addByUrl = useCallback(
+    (url: string, at: { x: number; y: number }) => {
+      history.commit();
+      return rawAddByUrl(url, at);
+    },
+    [history, rawAddByUrl],
   );
-  const addTodo = useCallback(
-    () => setNodes((ns) => [...ns, makeTodoNode(boardCenter())]),
-    [boardCenter, setNodes],
+  const addFiles = useCallback(
+    (files: File[], at: { x: number; y: number }) => {
+      history.commit();
+      return rawAddFiles(files, at);
+    },
+    [history, rawAddFiles],
   );
-  const addText = useCallback(
-    () => setNodes((ns) => [...ns, makeTextNode(boardCenter())]),
-    [boardCenter, setNodes],
+  const onNodeDragStart = useCallback(() => {
+    history.commit();
+  }, [history]);
+  const onNodeDragStop = useCallback<typeof rawOnNodeDragStop>(
+    (e, node, ns) => {
+      rawOnNodeDragStop(e, node, ns);
+    },
+    [rawOnNodeDragStop],
   );
-  const addFrame = useCallback(
-    () => setNodes((ns) => [makeFrameNode(boardCenter()), ...ns]),
-    [boardCenter, setNodes],
+  const onConnectWithHistory = useCallback<typeof onConnect>(
+    (params) => {
+      history.commit();
+      onConnect(params);
+    },
+    [history, onConnect],
   );
+
+  const addNote = useCallback(() => {
+    history.commit();
+    setNodes((ns) => [...ns, makeNoteNode(boardCenter())]);
+  }, [history, boardCenter, setNodes]);
+  const addTodo = useCallback(() => {
+    history.commit();
+    setNodes((ns) => [...ns, makeTodoNode(boardCenter())]);
+  }, [history, boardCenter, setNodes]);
+  const addText = useCallback(() => {
+    history.commit();
+    setNodes((ns) => [...ns, makeTextNode(boardCenter())]);
+  }, [history, boardCenter, setNodes]);
+  const addFrame = useCallback(() => {
+    history.commit();
+    setNodes((ns) => [makeFrameNode(boardCenter()), ...ns]);
+  }, [history, boardCenter, setNodes]);
 
   const onDrop = useCallback(
     async (e: React.DragEvent<HTMLDivElement>) => {
@@ -147,6 +182,7 @@ function Board() {
   );
 
   return (
+    <BoardHistoryProvider commit={history.commit}>
     <div className="flex h-screen flex-col">
       <header className="bg-background flex items-center gap-2 border-b px-4 py-3">
         <Button
@@ -158,6 +194,26 @@ function Board() {
           Back
         </Button>
         <h1 className="flex-1 truncate text-sm font-medium">{project.name}</h1>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Undo"
+          title="Undo (⌘Z)"
+          disabled={!history.canUndo}
+          onClick={history.undo}
+        >
+          <Undo2 aria-hidden />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Redo"
+          title="Redo (⇧⌘Z)"
+          disabled={!history.canRedo}
+          onClick={history.redo}
+        >
+          <Redo2 aria-hidden />
+        </Button>
       </header>
       <div className="flex min-h-0 flex-1">
         <BoardSidebar
@@ -180,8 +236,14 @@ function Board() {
             nodeTypes={nodeTypes}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
+            onConnect={onConnectWithHistory}
+            onNodeDragStart={onNodeDragStart}
             onNodeDragStop={onNodeDragStop}
+            onReconnectStart={history.commit}
+            onBeforeDelete={async () => {
+              history.commit();
+              return true;
+            }}
             defaultEdgeOptions={defaultEdgeOptions}
             fitView={nodes.length > 0}
             minZoom={0.1}
@@ -200,5 +262,6 @@ function Board() {
         onSubmit={(url) => addByUrl(url, boardCenter())}
       />
     </div>
+    </BoardHistoryProvider>
   );
 }
