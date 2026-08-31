@@ -7,8 +7,8 @@ import {
 } from "@xyflow/react";
 import { generateHTML } from "@tiptap/react";
 import type { JSONContent } from "@tiptap/react";
-import { CARD_COLORS, ColorPicker } from "../color-picker";
-import { NodeHandles } from "../node-handles";
+import { CARD_COLORS, ColorPicker } from "../../color-picker";
+import { NodeHandles } from "../../node-handles";
 import { useBoardCommit } from "#/lib/board/history-context";
 import { EMPTY_NOTE_DOC, NOTE_EXTENSIONS } from "./extensions";
 import { NoteEditor } from "./note-editor";

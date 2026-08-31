@@ -1,14 +1,14 @@
-import type { BookmarkNode } from "#/components/board/bookmark-node";
+import type { BookmarkNode } from "#/components/board/nodes/bookmark-node";
 import {
   EMBED_DRAG_HANDLE_CLASS,
   type EmbedNode,
-} from "#/components/board/embed-node";
-import type { FileNode } from "#/components/board/file-node";
-import type { FrameNode } from "#/components/board/frame-node";
-import type { ImageNode } from "#/components/board/image-node";
-import type { NoteNode } from "#/components/board/note";
-import type { TextNode } from "#/components/board/text-node";
-import type { TodoNode } from "#/components/board/todo-node";
+} from "#/components/board/nodes/embed-node";
+import type { FileNode } from "#/components/board/nodes/file-node";
+import type { FrameNode } from "#/components/board/nodes/frame-node";
+import type { ImageNode } from "#/components/board/nodes/image-node";
+import type { NoteNode } from "#/components/board/nodes/note";
+import type { TextNode } from "#/components/board/nodes/text-node";
+import type { TodoNode } from "#/components/board/nodes/todo-node";
 
 type XY = { x: number; y: number };
 

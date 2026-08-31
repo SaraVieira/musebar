@@ -5,8 +5,8 @@ import {
   type NodeProps,
   type Node,
 } from "@xyflow/react";
-import { CARD_COLORS, ColorPicker } from "./color-picker";
-import { NodeHandles } from "./node-handles";
+import { CARD_COLORS, ColorPicker } from "../color-picker";
+import { NodeHandles } from "../node-handles";
 import { useBoardCommit } from "#/lib/board/history-context";
 import { useCommitOnFirstEdit } from "#/lib/hooks/use-commit-on-first-edit";
 import { cn } from "#/lib/utils";

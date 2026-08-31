@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import { BoardHistoryProvider } from "#/lib/board/history-context";
 import { ShortcutsDialog } from "#/components/board/shortcuts-dialog";
 import { BoardSettingsButton } from "#/components/board/board-settings";
-import { EditProjectDialog } from "#/components/edit-project-dialog";
+import { EditProjectDialog } from "#/components/dashboard/edit-project-dialog";
 import { ExportMenu } from "#/components/board/export-menu";
 import { BackgroundVariant } from "@xyflow/react";
 import { Button } from "#/components/ui/button";
@@ -36,14 +36,14 @@ import {
   type PaneContextMenuState,
 } from "#/components/board/pane-context-menu";
 import { UrlDialog } from "#/components/board/url-dialog";
-import { BookmarkNodeView } from "#/components/board/bookmark-node";
-import { EmbedNodeView } from "#/components/board/embed-node";
-import { FileNodeView } from "#/components/board/file-node";
-import { FrameNodeView } from "#/components/board/frame-node";
-import { ImageNodeView } from "#/components/board/image-node";
-import { NoteNodeView } from "#/components/board/note";
-import { TextNodeView } from "#/components/board/text-node";
-import { TodoNodeView } from "#/components/board/todo-node";
+import { BookmarkNodeView } from "#/components/board/nodes/bookmark-node";
+import { EmbedNodeView } from "#/components/board/nodes/embed-node";
+import { FileNodeView } from "#/components/board/nodes/file-node";
+import { FrameNodeView } from "#/components/board/nodes/frame-node";
+import { ImageNodeView } from "#/components/board/nodes/image-node";
+import { NoteNodeView } from "#/components/board/nodes/note";
+import { TextNodeView } from "#/components/board/nodes/text-node";
+import { TodoNodeView } from "#/components/board/nodes/todo-node";
 import { getSession } from "#/lib/auth-server";
 import { getProject } from "#/lib/projects-server";
 import { duplicateNodes } from "#/lib/board/duplicate";
@@ -213,10 +213,22 @@ function Board() {
     [history, setNodes],
   );
 
-  const addNote = useCallback(() => addNoteAt(boardCenter()), [addNoteAt, boardCenter]);
-  const addTodo = useCallback(() => addTodoAt(boardCenter()), [addTodoAt, boardCenter]);
-  const addText = useCallback(() => addTextAt(boardCenter()), [addTextAt, boardCenter]);
-  const addFrame = useCallback(() => addFrameAt(boardCenter()), [addFrameAt, boardCenter]);
+  const addNote = useCallback(
+    () => addNoteAt(boardCenter()),
+    [addNoteAt, boardCenter],
+  );
+  const addTodo = useCallback(
+    () => addTodoAt(boardCenter()),
+    [addTodoAt, boardCenter],
+  );
+  const addText = useCallback(
+    () => addTextAt(boardCenter()),
+    [addTextAt, boardCenter],
+  );
+  const addFrame = useCallback(
+    () => addFrameAt(boardCenter()),
+    [addFrameAt, boardCenter],
+  );
 
   const duplicate = useCallback(
     (nodeId?: string) => {
@@ -255,9 +267,7 @@ function Board() {
       history.commit();
       setNodes((ns) => {
         const max = Math.max(0, ...ns.map((n) => n.zIndex ?? 0));
-        return ns.map((n) =>
-          n.id === nodeId ? { ...n, zIndex: max + 1 } : n,
-        );
+        return ns.map((n) => (n.id === nodeId ? { ...n, zIndex: max + 1 } : n));
       });
     },
     [history, setNodes],
@@ -277,7 +287,7 @@ function Board() {
         const overallMin = Math.min(targetZ, minOther);
         const shift = overallMin < 0 ? -overallMin : 0;
         return ns.map((n) => {
-          const base = n.id === nodeId ? targetZ : n.zIndex ?? 0;
+          const base = n.id === nodeId ? targetZ : (n.zIndex ?? 0);
           return { ...n, zIndex: base + shift };
         });
       });
@@ -345,180 +355,180 @@ function Board() {
 
   return (
     <BoardHistoryProvider commit={history.commit}>
-    <div className="flex h-screen flex-col">
-      <header className="bg-background flex items-center gap-2 border-b px-4 py-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.navigate({ href: "/dashboard" })}
-        >
-          <ArrowLeft aria-hidden />
-          Back
-        </Button>
-        <button
-          type="button"
-          onClick={() => setEditOpen(true)}
-          className="hover:bg-accent min-w-0 flex-1 truncate rounded px-2 py-1 text-left text-sm font-medium"
-          title="Rename project"
-        >
-          {project.name}
-        </button>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="Undo"
-          title="Undo (⌘Z)"
-          disabled={!history.canUndo}
-          onClick={history.undo}
-        >
-          <Undo2 aria-hidden />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="Redo"
-          title="Redo (⇧⌘Z)"
-          disabled={!history.canRedo}
-          onClick={history.redo}
-        >
-          <Redo2 aria-hidden />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="Keyboard shortcuts"
-          title="Keyboard shortcuts (⌘/)"
-          onClick={() => setShortcutsOpen(true)}
-        >
-          <Keyboard aria-hidden />
-        </Button>
-        <ExportMenu projectName={project.name} />
-        <BoardSettingsButton settings={settings} onChange={updateSettings} />
-      </header>
-      <div className="flex min-h-0 flex-1">
-        <BoardSidebar
-          onAddNote={addNote}
-          onAddTodo={addTodo}
-          onAddText={addText}
-          onAddFrame={addFrame}
-          onAddUrl={() => setUrlOpen(true)}
-          onAddFiles={(files) => addFiles(files, boardCenter())}
-        />
-        <div
-          ref={wrapperRef}
-          className="min-h-0 flex-1"
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={onDrop}
-        >
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            nodeTypes={nodeTypes}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnectWithHistory}
-            onNodeDragStart={onNodeDragStart}
-            onNodeDragStop={onNodeDragStop}
-            onReconnectStart={history.commit}
-            onNodeContextMenu={(e, node) => {
-              e.preventDefault();
-              setPaneMenu(null);
-              setContextMenu({ x: e.clientX, y: e.clientY, node });
-            }}
-            onPaneContextMenu={(e) => {
-              e.preventDefault();
-              setContextMenu(null);
-              setPaneMenu({ x: e.clientX, y: e.clientY });
-            }}
-            onPaneClick={() => {
-              setContextMenu(null);
-              setPaneMenu(null);
-            }}
-            onMove={() => {
-              setContextMenu(null);
-              setPaneMenu(null);
-            }}
-            onBeforeDelete={async () => {
-              history.commit();
-              return true;
-            }}
-            defaultEdgeOptions={defaultEdgeOptions}
-            fitView={nodes.length > 0}
-            minZoom={0.1}
-            maxZoom={2.5}
-            colorMode="dark"
-            snapToGrid={settings.snap}
-            snapGrid={[settings.gridSize, settings.gridSize]}
+      <div className="flex h-screen flex-col">
+        <header className="bg-background flex items-center gap-2 border-b px-4 py-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.navigate({ href: "/dashboard" })}
           >
-            {settings.bgVariant !== "none" ? (
-              <Background
-                variant={settings.bgVariant as unknown as BackgroundVariant}
-                color={settings.bgColor}
-                gap={settings.gridSize}
-                size={1}
-              />
-            ) : null}
-            <MiniMap pannable zoomable />
-            <Controls />
-          </ReactFlow>
+            <ArrowLeft aria-hidden />
+            Back
+          </Button>
+          <button
+            type="button"
+            onClick={() => setEditOpen(true)}
+            className="hover:bg-accent min-w-0 flex-1 truncate rounded px-2 py-1 text-left text-sm font-medium"
+            title="Rename project"
+          >
+            {project.name}
+          </button>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Undo"
+            title="Undo (⌘Z)"
+            disabled={!history.canUndo}
+            onClick={history.undo}
+          >
+            <Undo2 aria-hidden />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Redo"
+            title="Redo (⇧⌘Z)"
+            disabled={!history.canRedo}
+            onClick={history.redo}
+          >
+            <Redo2 aria-hidden />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Keyboard shortcuts"
+            title="Keyboard shortcuts (⌘/)"
+            onClick={() => setShortcutsOpen(true)}
+          >
+            <Keyboard aria-hidden />
+          </Button>
+          <ExportMenu projectName={project.name} />
+          <BoardSettingsButton settings={settings} onChange={updateSettings} />
+        </header>
+        <div className="flex min-h-0 flex-1">
+          <BoardSidebar
+            onAddNote={addNote}
+            onAddTodo={addTodo}
+            onAddText={addText}
+            onAddFrame={addFrame}
+            onAddUrl={() => setUrlOpen(true)}
+            onAddFiles={(files) => addFiles(files, boardCenter())}
+          />
+          <div
+            ref={wrapperRef}
+            className="min-h-0 flex-1"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={onDrop}
+          >
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              nodeTypes={nodeTypes}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnectWithHistory}
+              onNodeDragStart={onNodeDragStart}
+              onNodeDragStop={onNodeDragStop}
+              onReconnectStart={history.commit}
+              onNodeContextMenu={(e, node) => {
+                e.preventDefault();
+                setPaneMenu(null);
+                setContextMenu({ x: e.clientX, y: e.clientY, node });
+              }}
+              onPaneContextMenu={(e) => {
+                e.preventDefault();
+                setContextMenu(null);
+                setPaneMenu({ x: e.clientX, y: e.clientY });
+              }}
+              onPaneClick={() => {
+                setContextMenu(null);
+                setPaneMenu(null);
+              }}
+              onMove={() => {
+                setContextMenu(null);
+                setPaneMenu(null);
+              }}
+              onBeforeDelete={async () => {
+                history.commit();
+                return true;
+              }}
+              defaultEdgeOptions={defaultEdgeOptions}
+              fitView={nodes.length > 0}
+              minZoom={0.1}
+              maxZoom={2.5}
+              colorMode="dark"
+              snapToGrid={settings.snap}
+              snapGrid={[settings.gridSize, settings.gridSize]}
+            >
+              {settings.bgVariant !== "none" ? (
+                <Background
+                  variant={settings.bgVariant as unknown as BackgroundVariant}
+                  color={settings.bgColor}
+                  gap={settings.gridSize}
+                  size={1}
+                />
+              ) : null}
+              <MiniMap pannable zoomable />
+              <Controls />
+            </ReactFlow>
+          </div>
         </div>
+        <UrlDialog
+          open={urlOpen}
+          onOpenChange={setUrlOpen}
+          onSubmit={(url) => addByUrl(url, boardCenter())}
+        />
+        {contextMenu ? (
+          <NodeContextMenu
+            state={contextMenu}
+            actions={{
+              onDuplicate: () => duplicate(contextMenu.node.id),
+              onDelete: () => deleteNode(contextMenu.node.id),
+              onBringToFront: () => bringToFront(contextMenu.node.id),
+              onSendToBack: () => sendToBack(contextMenu.node.id),
+              onColor: (c) => setNodeColor(contextMenu.node.id, c),
+              onCopyLink: () => copyLink(contextMenu.node),
+              onClose: () => setContextMenu(null),
+            }}
+          />
+        ) : null}
+        <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+        <EditProjectDialog
+          project={{
+            id: project.id,
+            name: project.name,
+            description: project.description ?? null,
+          }}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          onSaved={() => router.invalidate()}
+        />
+        {paneMenu ? (
+          <PaneContextMenu
+            state={paneMenu}
+            actions={{
+              onAddNote: () =>
+                addNoteAt(
+                  rf.screenToFlowPosition({ x: paneMenu.x, y: paneMenu.y }),
+                ),
+              onAddTodo: () =>
+                addTodoAt(
+                  rf.screenToFlowPosition({ x: paneMenu.x, y: paneMenu.y }),
+                ),
+              onAddText: () =>
+                addTextAt(
+                  rf.screenToFlowPosition({ x: paneMenu.x, y: paneMenu.y }),
+                ),
+              onAddFrame: () =>
+                addFrameAt(
+                  rf.screenToFlowPosition({ x: paneMenu.x, y: paneMenu.y }),
+                ),
+              onAddUrl: () => setUrlOpen(true),
+              onClose: () => setPaneMenu(null),
+            }}
+          />
+        ) : null}
       </div>
-      <UrlDialog
-        open={urlOpen}
-        onOpenChange={setUrlOpen}
-        onSubmit={(url) => addByUrl(url, boardCenter())}
-      />
-      {contextMenu ? (
-        <NodeContextMenu
-          state={contextMenu}
-          actions={{
-            onDuplicate: () => duplicate(contextMenu.node.id),
-            onDelete: () => deleteNode(contextMenu.node.id),
-            onBringToFront: () => bringToFront(contextMenu.node.id),
-            onSendToBack: () => sendToBack(contextMenu.node.id),
-            onColor: (c) => setNodeColor(contextMenu.node.id, c),
-            onCopyLink: () => copyLink(contextMenu.node),
-            onClose: () => setContextMenu(null),
-          }}
-        />
-      ) : null}
-      <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
-      <EditProjectDialog
-        project={{
-          id: project.id,
-          name: project.name,
-          description: project.description ?? null,
-        }}
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        onSaved={() => router.invalidate()}
-      />
-      {paneMenu ? (
-        <PaneContextMenu
-          state={paneMenu}
-          actions={{
-            onAddNote: () =>
-              addNoteAt(
-                rf.screenToFlowPosition({ x: paneMenu.x, y: paneMenu.y }),
-              ),
-            onAddTodo: () =>
-              addTodoAt(
-                rf.screenToFlowPosition({ x: paneMenu.x, y: paneMenu.y }),
-              ),
-            onAddText: () =>
-              addTextAt(
-                rf.screenToFlowPosition({ x: paneMenu.x, y: paneMenu.y }),
-              ),
-            onAddFrame: () =>
-              addFrameAt(
-                rf.screenToFlowPosition({ x: paneMenu.x, y: paneMenu.y }),
-              ),
-            onAddUrl: () => setUrlOpen(true),
-            onClose: () => setPaneMenu(null),
-          }}
-        />
-      ) : null}
-    </div>
     </BoardHistoryProvider>
   );
 }

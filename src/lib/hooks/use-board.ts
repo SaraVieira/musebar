@@ -16,6 +16,7 @@ import {
   normalizeSettings,
   type BoardSettings,
 } from "#/lib/board/settings";
+import { generateBoardThumbnail } from "#/lib/board/thumbnail";
 
 type Project = NonNullable<Awaited<ReturnType<typeof getProject>>>;
 
@@ -79,6 +80,7 @@ export function useBoard(project: Project) {
         data: {
           id: project.id,
           content: JSON.stringify({ nodes, edges, settings }),
+          thumbnail: generateBoardThumbnail(nodes, edges),
         },
       }).catch((err) => {
         toast.error("Couldn't save the board", {

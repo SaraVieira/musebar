@@ -5,7 +5,7 @@ import {
   type NodeProps,
   type Node,
 } from "@xyflow/react";
-import { NodeHandles } from "./node-handles";
+import { NodeHandles } from "../node-handles";
 import { useBoardCommit } from "#/lib/board/history-context";
 
 interface FrameNodeData {

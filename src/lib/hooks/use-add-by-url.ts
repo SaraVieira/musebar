@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import type { Node } from "@xyflow/react";
 import { toast } from "sonner";
-import { detectEmbed } from "#/components/board/embed-node";
+import { detectEmbed } from "#/components/board/nodes/embed-node";
 import { fetchLinkMetadata } from "#/lib/link-metadata-server";
 import { makeBookmarkNode, makeEmbedNode } from "#/lib/board/factories";
 

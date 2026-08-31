@@ -120,6 +120,7 @@ export const Projects = sqliteTable("projects", {
   name: text("name").notNull(),
   description: text("description"),
   content: text("content"),
+  thumbnail: text("thumbnail"),
   public: integer("public", { mode: "boolean" }).default(false).notNull(),
   userId: text("user_id")
     .notNull()

@@ -5,7 +5,7 @@ import {
   type NodeProps,
   type Node,
 } from "@xyflow/react";
-import { NodeHandles } from "./node-handles";
+import { NodeHandles } from "../node-handles";
 import { useBoardCommit } from "#/lib/board/history-context";
 
 interface TextNodeData {
@@ -68,7 +68,7 @@ export function TextNodeView({
             style={{ color, fontSize: size, fontWeight: 500 }}
           />
         ) : text ? (
-          <div className="whitespace-pre-wrap break-words">{text}</div>
+          <div className="whitespace-pre-wrap wrap-break-word">{text}</div>
         ) : (
           <div className="opacity-40">Double-click to write</div>
         )}

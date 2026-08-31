@@ -1,34 +1,18 @@
-import {
-  createFileRoute,
-  redirect,
-  useRouter,
-  Link,
-} from "@tanstack/react-router";
-import { LogOut, Pencil, Plus, Trash2 } from "lucide-react";
+import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
+import { LogOut, Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { authClient } from "#/lib/auth-client";
 import { Button } from "#/components/ui/button";
-import { Card, CardContent } from "#/components/ui/card";
 import { Input } from "#/components/ui/input";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "#/components/ui/alert-dialog";
 import { getSession } from "#/lib/auth-server";
 import {
   createProject,
   deleteProject,
   listProjects,
 } from "#/lib/projects-server";
-import { EditProjectDialog } from "#/components/edit-project-dialog";
+import { EditProjectDialog } from "#/components/dashboard/edit-project-dialog";
+import { ProjectCard } from "#/components/dashboard/project-card";
 
 export const Route = createFileRoute("/dashboard")({
   beforeLoad: async () => {
@@ -40,7 +24,9 @@ export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
 });
 
-type ProjectRow = ReturnType<typeof Route.useLoaderData>["projects"][number];
+export type ProjectRow = ReturnType<
+  typeof Route.useLoaderData
+>["projects"][number];
 
 function Dashboard() {
   const { session } = Route.useRouteContext();
@@ -98,65 +84,48 @@ function Dashboard() {
         </Button>
       </header>
 
-      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">
-        <h1 className="mb-6 text-3xl font-semibold tracking-tight">
-          Your projects
-        </h1>
-
-        <form onSubmit={onCreate} className="mb-8 flex gap-2">
-          <Input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="New project name…"
-            className="flex-1"
-          />
-          <Button type="submit" disabled={busy || !name.trim()}>
-            <Plus aria-hidden />
-            Create
-          </Button>
-        </form>
+      <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10">
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight">
+              Your projects
+            </h1>
+            <p className="text-muted-foreground mt-1 text-sm">
+              {projects.length === 0
+                ? "Start by creating your first board."
+                : `${projects.length} ${projects.length === 1 ? "board" : "boards"}`}
+            </p>
+          </div>
+          <form onSubmit={onCreate} className="flex w-full max-w-sm gap-2">
+            <Input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="New project name…"
+              className="flex-1"
+            />
+            <Button type="submit" disabled={busy || !name.trim()}>
+              <Plus aria-hidden />
+              Create
+            </Button>
+          </form>
+        </div>
 
         {projects.length === 0 ? (
-          <Card>
-            <CardContent className="text-muted-foreground py-12 text-center text-sm">
+          <div className="border-border/60 bg-card/40 rounded-xl border border-dashed py-20 text-center">
+            <p className="text-muted-foreground text-sm">
               No projects yet. Create your first board above.
-            </CardContent>
-          </Card>
+            </p>
+          </div>
         ) : (
-          <ul className="flex flex-col gap-2">
+          <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {projects.map((p) => (
-              <li key={p.id}>
-                <Card className="hover:bg-accent/40 transition-colors">
-                  <CardContent className="flex items-center gap-2 p-4">
-                    <Link
-                      to="/projects/$id"
-                      params={{ id: p.id }}
-                      className="min-w-0 flex-1"
-                    >
-                      <div className="truncate font-medium">{p.name}</div>
-                      {p.description ? (
-                        <div className="text-muted-foreground truncate text-sm">
-                          {p.description}
-                        </div>
-                      ) : null}
-                    </Link>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`Edit ${p.name}`}
-                      className="text-muted-foreground hover:text-foreground"
-                      onClick={() => setEditing(p)}
-                    >
-                      <Pencil aria-hidden />
-                    </Button>
-                    <DeleteProjectButton
-                      name={p.name}
-                      onConfirm={() => onDelete(p.id, p.name)}
-                    />
-                  </CardContent>
-                </Card>
-              </li>
+              <ProjectCard
+                key={p.id}
+                project={p}
+                onEdit={() => setEditing(p)}
+                onDelete={() => onDelete(p.id, p.name)}
+              />
             ))}
           </ul>
         )}
@@ -173,46 +142,5 @@ function Dashboard() {
         }}
       />
     </div>
-  );
-}
-
-function DeleteProjectButton({
-  name,
-  onConfirm,
-}: {
-  name: string;
-  onConfirm: () => void | Promise<void>;
-}) {
-  return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={`Delete ${name}`}
-          className="text-muted-foreground hover:text-destructive"
-        >
-          <Trash2 aria-hidden />
-        </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Delete this project?</AlertDialogTitle>
-          <AlertDialogDescription>
-            <strong>{name}</strong> and all of its notes, files, and boards will
-            be permanently deleted. This can't be undone.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={onConfirm}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
-            Delete
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
   );
 }

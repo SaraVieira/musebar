@@ -1,6 +1,6 @@
 import { GripHorizontal } from "lucide-react";
 import { NodeResizer, type NodeProps, type Node } from "@xyflow/react";
-import { NodeHandles } from "./node-handles";
+import { NodeHandles } from "../node-handles";
 import { useBoardCommit } from "#/lib/board/history-context";
 
 export const EMBED_DRAG_HANDLE_CLASS = "embed-drag-handle";
@@ -33,7 +33,7 @@ export function EmbedNodeView({
       />
       <div className="flex size-full flex-col overflow-hidden rounded-xl bg-black shadow-md">
         <div
-          className={`${EMBED_DRAG_HANDLE_CLASS} flex h-6 shrink-0 cursor-grab items-center justify-center bg-gray-900 text-gray-500 hover:text-gray-300 active:cursor-grabbing`}
+          className={`${EMBED_DRAG_HANDLE_CLASS} flex h-6 shrink-0 cursor-grab items-center justify-center bg-gray-900 text-gray-500 hover:text-gray-300`}
           title="Drag to move"
         >
           <GripHorizontal aria-hidden className="size-3.5" />

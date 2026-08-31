@@ -13,6 +13,7 @@ export const listProjects = createServerFn({ method: "GET" }).handler(
         id: Projects.id,
         name: Projects.name,
         description: Projects.description,
+        thumbnail: Projects.thumbnail,
         updatedAt: Projects.updatedAt,
       })
       .from(Projects)
@@ -76,12 +77,24 @@ export const updateProject = createServerFn({ method: "POST" })
   });
 
 export const updateProjectContent = createServerFn({ method: "POST" })
-  .validator(z.object({ id: z.string(), content: z.string() }))
+  .validator(
+    z.object({
+      id: z.string(),
+      content: z.string(),
+      thumbnail: z.string().nullable().optional(),
+    }),
+  )
   .handler(async ({ data }) => {
     const session = await requireServerSession();
+    const patch: {
+      content: string;
+      updatedAt: Date;
+      thumbnail?: string | null;
+    } = { content: data.content, updatedAt: new Date() };
+    if (data.thumbnail !== undefined) patch.thumbnail = data.thumbnail;
     await db
       .update(Projects)
-      .set({ content: data.content, updatedAt: new Date() })
+      .set(patch)
       .where(
         and(eq(Projects.id, data.id), eq(Projects.userId, session.user.id)),
       );
