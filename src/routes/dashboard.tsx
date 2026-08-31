@@ -4,7 +4,7 @@ import {
   useRouter,
   Link,
 } from "@tanstack/react-router";
-import { LogOut, Plus, Trash2 } from "lucide-react";
+import { LogOut, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { authClient } from "#/lib/auth-client";
@@ -28,6 +28,7 @@ import {
   deleteProject,
   listProjects,
 } from "#/lib/projects-server";
+import { EditProjectDialog } from "#/components/edit-project-dialog";
 
 export const Route = createFileRoute("/dashboard")({
   beforeLoad: async () => {
@@ -39,12 +40,15 @@ export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
 });
 
+type ProjectRow = ReturnType<typeof Route.useLoaderData>["projects"][number];
+
 function Dashboard() {
   const { session } = Route.useRouteContext();
   const { projects } = Route.useLoaderData();
   const router = useRouter();
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState<ProjectRow | null>(null);
 
   async function signOut() {
     await authClient.signOut();
@@ -137,6 +141,15 @@ function Dashboard() {
                         </div>
                       ) : null}
                     </Link>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Edit ${p.name}`}
+                      className="text-muted-foreground hover:text-foreground"
+                      onClick={() => setEditing(p)}
+                    >
+                      <Pencil aria-hidden />
+                    </Button>
                     <DeleteProjectButton
                       name={p.name}
                       onConfirm={() => onDelete(p.id, p.name)}
@@ -148,6 +161,17 @@ function Dashboard() {
           </ul>
         )}
       </main>
+      <EditProjectDialog
+        project={editing}
+        open={editing !== null}
+        onOpenChange={(o) => {
+          if (!o) setEditing(null);
+        }}
+        onSaved={async () => {
+          await router.invalidate();
+          toast.success("Project updated");
+        }}
+      />
     </div>
   );
 }

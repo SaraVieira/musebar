@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { BoardHistoryProvider } from "#/lib/board/history-context";
 import { ShortcutsDialog } from "#/components/board/shortcuts-dialog";
 import { BoardSettingsButton } from "#/components/board/board-settings";
+import { EditProjectDialog } from "#/components/edit-project-dialog";
 import { ExportMenu } from "#/components/board/export-menu";
 import { BackgroundVariant } from "@xyflow/react";
 import { Button } from "#/components/ui/button";
@@ -102,6 +103,7 @@ function Board() {
   );
   const [paneMenu, setPaneMenu] = useState<PaneContextMenuState | null>(null);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const preDragSnapshot = useRef<{
     nodes: Node[];
     edges: Edge[];
@@ -353,7 +355,14 @@ function Board() {
           <ArrowLeft aria-hidden />
           Back
         </Button>
-        <h1 className="flex-1 truncate text-sm font-medium">{project.name}</h1>
+        <button
+          type="button"
+          onClick={() => setEditOpen(true)}
+          className="hover:bg-accent min-w-0 flex-1 truncate rounded px-2 py-1 text-left text-sm font-medium"
+          title="Rename project"
+        >
+          {project.name}
+        </button>
         <Button
           variant="ghost"
           size="icon"
@@ -474,6 +483,16 @@ function Board() {
         />
       ) : null}
       <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+      <EditProjectDialog
+        project={{
+          id: project.id,
+          name: project.name,
+          description: project.description ?? null,
+        }}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        onSaved={() => router.invalidate()}
+      />
       {paneMenu ? (
         <PaneContextMenu
           state={paneMenu}

@@ -53,6 +53,28 @@ export const createProject = createServerFn({ method: "POST" })
     return { id };
   });
 
+export const updateProject = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      id: z.string(),
+      name: z.string().min(1).max(120),
+      description: z.string().max(500).nullable(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const session = await requireServerSession();
+    await db
+      .update(Projects)
+      .set({
+        name: data.name,
+        description: data.description,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(eq(Projects.id, data.id), eq(Projects.userId, session.user.id)),
+      );
+  });
+
 export const updateProjectContent = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.string(), content: z.string() }))
   .handler(async ({ data }) => {
