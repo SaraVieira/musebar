@@ -4,13 +4,9 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { authClient } from "#/lib/auth-client";
 import { Button } from "#/components/ui/button";
-import { Input } from "#/components/ui/input";
 import { getSession } from "#/lib/auth-server";
-import {
-  createProject,
-  deleteProject,
-  listProjects,
-} from "#/lib/projects-server";
+import { deleteProject, listProjects } from "#/lib/projects-server";
+import { CreateProjectDialog } from "#/components/dashboard/create-project-dialog";
 import { EditProjectDialog } from "#/components/dashboard/edit-project-dialog";
 import { ProjectCard } from "#/components/dashboard/project-card";
 
@@ -32,32 +28,13 @@ function Dashboard() {
   const { session } = Route.useRouteContext();
   const { projects } = Route.useLoaderData();
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<ProjectRow | null>(null);
 
   async function signOut() {
     await authClient.signOut();
     await router.invalidate();
     router.navigate({ href: "/login" });
-  }
-
-  async function onCreate(e: React.FormEvent) {
-    e.preventDefault();
-    if (!name.trim() || busy) return;
-    setBusy(true);
-    try {
-      const { id } = await createProject({ data: { name: name.trim() } });
-      setName("");
-      await router.invalidate();
-      router.navigate({ href: `/projects/${id}` });
-    } catch (err) {
-      toast.error("Couldn't create the project", {
-        description: err instanceof Error ? err.message : undefined,
-      });
-    } finally {
-      setBusy(false);
-    }
   }
 
   async function onDelete(id: string, name: string) {
@@ -96,27 +73,26 @@ function Dashboard() {
                 : `${projects.length} ${projects.length === 1 ? "board" : "boards"}`}
             </p>
           </div>
-          <form onSubmit={onCreate} className="flex w-full max-w-sm gap-2">
-            <Input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="New project name…"
-              className="flex-1"
-            />
-            <Button type="submit" disabled={busy || !name.trim()}>
-              <Plus aria-hidden />
-              Create
-            </Button>
-          </form>
+          <Button onClick={() => setCreating(true)}>
+            <Plus aria-hidden />
+            New project
+          </Button>
         </div>
 
         {projects.length === 0 ? (
-          <div className="border-border/60 bg-card/40 rounded-xl border border-dashed py-20 text-center">
-            <p className="text-muted-foreground text-sm">
-              No projects yet. Create your first board above.
+          <button
+            type="button"
+            onClick={() => setCreating(true)}
+            className="border-border/60 hover:border-border hover:bg-card/60 bg-card/40 focus-visible:ring-ring block w-full rounded-xl border border-dashed py-20 text-center transition-colors focus-visible:ring-2 focus-visible:outline-none"
+          >
+            <Plus
+              aria-hidden
+              className="text-muted-foreground mx-auto h-8 w-8"
+            />
+            <p className="text-muted-foreground mt-2 text-sm">
+              Create your first board
             </p>
-          </div>
+          </button>
         ) : (
           <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {projects.map((p) => (
@@ -130,6 +106,14 @@ function Dashboard() {
           </ul>
         )}
       </main>
+      <CreateProjectDialog
+        open={creating}
+        onOpenChange={setCreating}
+        onCreated={async (id) => {
+          await router.invalidate();
+          router.navigate({ href: `/projects/${id}` });
+        }}
+      />
       <EditProjectDialog
         project={editing}
         open={editing !== null}

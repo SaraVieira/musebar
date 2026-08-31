@@ -60,6 +60,7 @@ import { useBoardHistory } from "#/lib/hooks/use-board-history";
 import { useBoardPaste } from "#/lib/hooks/use-board-paste";
 import { useBoardShortcuts } from "#/lib/hooks/use-board-shortcuts";
 import { useFrameParenting } from "#/lib/hooks/use-frame-parenting";
+import { DevTools } from "#/components/devtools";
 
 const nodeTypes: NodeTypes = {
   note: NoteNodeView,
@@ -468,7 +469,8 @@ function Board() {
                   size={1}
                 />
               ) : null}
-              <MiniMap pannable zoomable />
+              {settings.minimap ? <MiniMap pannable zoomable /> : null}
+              <DevTools position="top-left" />
               <Controls />
             </ReactFlow>
           </div>

@@ -1,11 +1,16 @@
 import { Settings } from "lucide-react";
 import { Button } from "#/components/ui/button";
 import { Label } from "#/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "#/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "#/components/ui/popover";
 import { Switch } from "#/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { cn } from "#/lib/utils";
 import type { BgVariant, BoardSettings } from "#/lib/board/settings";
+import { Checkbox } from "../ui/checkbox";
 
 const BG_PATTERNS: { value: BgVariant; label: string }[] = [
   { value: "dots", label: "Dots" },
@@ -128,6 +133,19 @@ export function BoardSettingsButton({
                 />
               ))}
             </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="snap-minimap" className="text-sm">
+                Minimap
+              </Label>
+              <p className="text-muted-foreground text-xs">Show minimap</p>
+            </div>
+            <Switch
+              id="show-minimap"
+              checked={settings.minimap}
+              onCheckedChange={(v) => onChange({ minimap: v })}
+            />
           </div>
         </div>
       </PopoverContent>
