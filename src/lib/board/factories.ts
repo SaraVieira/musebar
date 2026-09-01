@@ -153,6 +153,46 @@ export function makeImageNode(
   };
 }
 
+export function makeImageNodeFromUrl(
+  center: XY,
+  url: string,
+  dims: { w: number; h: number },
+): ImageNode {
+  const scale = Math.min(1, 320 / Math.max(dims.w, dims.h));
+  const w = Math.round(dims.w * scale);
+  const h = Math.round(dims.h * scale);
+  const name = (() => {
+    try {
+      return decodeURIComponent(new URL(url).pathname.split("/").pop() ?? url);
+    } catch {
+      return url;
+    }
+  })();
+  const mimeType = (() => {
+    const ext = name.split(".").pop()?.toLowerCase();
+    const map: Record<string, string> = {
+      png: "image/png",
+      jpg: "image/jpeg",
+      jpeg: "image/jpeg",
+      gif: "image/gif",
+      webp: "image/webp",
+      svg: "image/svg+xml",
+      avif: "image/avif",
+      bmp: "image/bmp",
+      ico: "image/x-icon",
+    };
+    return (ext && map[ext]) || "image/*";
+  })();
+  return {
+    id: crypto.randomUUID(),
+    type: "image",
+    position: { x: center.x - w / 2, y: center.y - h / 2 },
+    width: w,
+    height: h,
+    data: { src: url, name, mimeType },
+  };
+}
+
 export function makeFileNode(
   center: XY,
   offsetIndex: number,

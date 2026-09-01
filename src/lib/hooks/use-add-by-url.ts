@@ -7,11 +7,24 @@ import { fetchMapMetadata } from "#/lib/map-metadata-server";
 import {
   makeBookmarkNode,
   makeEmbedNode,
+  makeImageNodeFromUrl,
   makeMapNode,
 } from "#/lib/board/factories";
+import { readImageDimsFromUrl } from "#/lib/media-dims";
 
 type SetNodes = (updater: (nodes: Node[]) => Node[]) => void;
 type XY = { x: number; y: number };
+
+const IMAGE_EXT_RE = /\.(png|jpe?g|gif|webp|svg|avif|bmp|ico)(?:$|[?#])/i;
+const DEFAULT_IMAGE_DIMS = { w: 480, h: 320 };
+
+function isImageUrl(url: string): boolean {
+  try {
+    return IMAGE_EXT_RE.test(new URL(url).pathname);
+  } catch {
+    return false;
+  }
+}
 
 function isGoogleMapsUrl(url: string): boolean {
   try {
@@ -45,6 +58,13 @@ export function useAddByUrl(setNodes: SetNodes) {
           });
           return;
         }
+      }
+      if (isImageUrl(url)) {
+        const dims = await readImageDimsFromUrl(url).catch(
+          () => DEFAULT_IMAGE_DIMS,
+        );
+        setNodes((ns) => [...ns, makeImageNodeFromUrl(at, url, dims)]);
+        return;
       }
       const embed = detectEmbed(url);
       if (embed) {
