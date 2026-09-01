@@ -1,7 +1,12 @@
 import { useCallback } from "react";
 import type { Node } from "@xyflow/react";
 import { toast } from "sonner";
-import { makeFileNode, makeImageNode } from "#/lib/board/factories";
+import {
+  makeFileNode,
+  makeImageNode,
+  makeModelNode,
+} from "#/lib/board/factories";
+import { detectModelFormat } from "#/components/board/nodes/model-node";
 import { readImageDims } from "#/lib/media-dims";
 
 type SetNodes = (updater: (nodes: Node[]) => Node[]) => void;
@@ -22,7 +27,10 @@ export function useAddFiles(setNodes: SetNodes, uploadFile: UploadFile) {
         const file = files[i];
         try {
           const uploaded = await uploadFile(file);
-          if (uploaded.mimeType.startsWith("image/")) {
+          const modelFormat = detectModelFormat(file.name);
+          if (modelFormat) {
+            toAdd.push(makeModelNode(at, i, file, uploaded, modelFormat));
+          } else if (uploaded.mimeType.startsWith("image/")) {
             const dims = await readImageDims(file).catch(
               () => DEFAULT_IMAGE_DIMS,
             );

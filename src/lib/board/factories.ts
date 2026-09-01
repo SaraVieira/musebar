@@ -7,6 +7,11 @@ import type { FileNode } from "#/components/board/nodes/file-node";
 import type { FrameNode } from "#/components/board/nodes/frame-node";
 import type { ImageNode } from "#/components/board/nodes/image-node";
 import type { MapNode } from "#/components/board/nodes/map-node";
+import {
+  MODEL_DRAG_HANDLE_CLASS,
+  type ModelFormat,
+  type ModelNode,
+} from "#/components/board/nodes/model-node";
 import type { NoteNode } from "#/components/board/nodes/note";
 import type { TextNode } from "#/components/board/nodes/text-node";
 import type { TodoNode } from "#/components/board/nodes/todo-node";
@@ -190,6 +195,32 @@ export function makeImageNodeFromUrl(
     width: w,
     height: h,
     data: { src: url, name, mimeType },
+  };
+}
+
+export function makeModelNode(
+  center: XY,
+  offsetIndex: number,
+  file: { name: string },
+  uploaded: { src: string; mimeType: string },
+  format: ModelFormat,
+): ModelNode {
+  const w = 360;
+  const h = 300;
+  const offset = offsetIndex * 16;
+  return {
+    id: crypto.randomUUID(),
+    type: "model",
+    position: { x: center.x - w / 2 + offset, y: center.y - h / 2 + offset },
+    width: w,
+    height: h,
+    dragHandle: `.${MODEL_DRAG_HANDLE_CLASS}`,
+    data: {
+      src: uploaded.src,
+      name: file.name,
+      mimeType: uploaded.mimeType || "application/octet-stream",
+      format,
+    },
   };
 }
 
