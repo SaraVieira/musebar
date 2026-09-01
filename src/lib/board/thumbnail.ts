@@ -15,6 +15,7 @@ const DEFAULT_SIZE: Record<string, { w: number; h: number }> = {
   image: { w: 240, h: 180 },
   bookmark: { w: 300, h: 110 },
   embed: { w: 480, h: 270 },
+  map: { w: 320, h: 300 },
 };
 
 const TYPE_FILL: Record<string, string> = {
@@ -26,6 +27,7 @@ const TYPE_FILL: Record<string, string> = {
   image: "#fb7185",
   bookmark: "#34d399",
   embed: "#f97316",
+  map: "#ef4444",
 };
 
 function nodeSize(n: Node) {

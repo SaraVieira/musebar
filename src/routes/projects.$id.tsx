@@ -41,6 +41,7 @@ import { EmbedNodeView } from "#/components/board/nodes/embed-node";
 import { FileNodeView } from "#/components/board/nodes/file-node";
 import { FrameNodeView } from "#/components/board/nodes/frame-node";
 import { ImageNodeView } from "#/components/board/nodes/image-node";
+import { MapNodeView } from "#/components/board/nodes/map-node";
 import { NoteNodeView } from "#/components/board/nodes/note";
 import { TextNodeView } from "#/components/board/nodes/text-node";
 import { TodoNodeView } from "#/components/board/nodes/todo-node";
@@ -71,6 +72,7 @@ const nodeTypes: NodeTypes = {
   text: TextNodeView,
   frame: FrameNodeView,
   embed: EmbedNodeView,
+  map: MapNodeView,
 };
 
 export const Route = createFileRoute("/projects/$id")({

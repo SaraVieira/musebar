@@ -6,6 +6,7 @@ import {
 import type { FileNode } from "#/components/board/nodes/file-node";
 import type { FrameNode } from "#/components/board/nodes/frame-node";
 import type { ImageNode } from "#/components/board/nodes/image-node";
+import type { MapNode } from "#/components/board/nodes/map-node";
 import type { NoteNode } from "#/components/board/nodes/note";
 import type { TextNode } from "#/components/board/nodes/text-node";
 import type { TodoNode } from "#/components/board/nodes/todo-node";
@@ -79,6 +80,27 @@ export function makeEmbedNode(
     height: embed.h,
     dragHandle: `.${EMBED_DRAG_HANDLE_CLASS}`,
     data: { src: embed.src, title: url },
+  };
+}
+
+export function makeMapNode(
+  center: XY,
+  meta: { url: string; mapSrc: string; title: string; address: string },
+): MapNode {
+  const w = 320;
+  const h = 300;
+  return {
+    id: crypto.randomUUID(),
+    type: "map",
+    position: { x: center.x - w / 2, y: center.y - h / 2 },
+    width: w,
+    height: h,
+    data: {
+      url: meta.url,
+      mapSrc: meta.mapSrc,
+      title: meta.title,
+      address: meta.address,
+    },
   };
 }
 
