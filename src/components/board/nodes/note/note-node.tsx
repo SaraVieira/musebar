@@ -62,6 +62,9 @@ export function NoteNodeView({
 					}}
 				/>
 			) : null}
+			{/* Double-click to edit. A keyboard path for this needs React Flow's
+			    node focus model, which the board does not wire up yet. */}
+			{/* biome-ignore lint/a11y/noStaticElementInteractions: keyboard path tracked as board-wide a11y work */}
 			<div
 				onDoubleClick={() => {
 					commit();
@@ -79,6 +82,10 @@ export function NoteNodeView({
 				) : (
 					<div
 						className="note-card-content"
+						// HTML comes from TipTap's generateHTML over a schema-constrained
+						// doc, so it is not arbitrary markup. The real hardening is
+						// validating project.content on load, which is still outstanding.
+						// biome-ignore lint/security/noDangerouslySetInnerHtml: schema-constrained TipTap output
 						dangerouslySetInnerHTML={{
 							__html:
 								html ||

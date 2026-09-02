@@ -30,6 +30,9 @@ export function NoteEditor({
 	if (!editor) return null;
 
 	return (
+		// Not a control: this wrapper only stops canvas drag/key handlers from
+		// swallowing events meant for the editor inside it.
+		// biome-ignore lint/a11y/noStaticElementInteractions: event firewall, not an interactive element
 		<div
 			onPointerDown={(e) => e.stopPropagation()}
 			onKeyDown={(e) => e.stopPropagation()}

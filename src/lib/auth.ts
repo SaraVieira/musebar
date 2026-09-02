@@ -12,24 +12,30 @@ async function anyUserExists() {
 	return rows.length > 0;
 }
 
-export const hasGithubAuth = Boolean(
-	env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET,
-);
+const githubClientId = env.GITHUB_CLIENT_ID;
+const githubClientSecret = env.GITHUB_CLIENT_SECRET;
+
+// Narrowed into locals so the provider config below type-checks without
+// non-null assertions.
+const githubProvider =
+	githubClientId && githubClientSecret
+		? {
+				github: {
+					enabled: true,
+					clientId: githubClientId,
+					clientSecret: githubClientSecret,
+				},
+			}
+		: {};
+
+export const hasGithubAuth = Boolean(githubClientId && githubClientSecret);
 
 export const auth = betterAuth({
 	database: drizzleAdapter(db, { provider: "sqlite" }),
 	emailAndPassword: {
 		enabled: true,
 	},
-	socialProviders: hasGithubAuth
-		? {
-				github: {
-					enabled: true,
-					clientId: env.GITHUB_CLIENT_ID!,
-					clientSecret: env.GITHUB_CLIENT_SECRET!,
-				},
-			}
-		: {},
+	socialProviders: githubProvider,
 	databaseHooks: {
 		user: {
 			create: {

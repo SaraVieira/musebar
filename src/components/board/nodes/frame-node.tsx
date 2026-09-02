@@ -4,7 +4,7 @@ import {
 	NodeResizer,
 	useReactFlow,
 } from "@xyflow/react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useBoardCommit } from "#/lib/board/history-context";
 import { NodeHandles } from "../node-handles";
 
@@ -25,7 +25,12 @@ export function FrameNodeView({
 	const { updateNodeData } = useReactFlow();
 	const commit = useBoardCommit();
 	const [editing, setEditing] = useState(false);
+	const inputRef = useRef<HTMLInputElement>(null);
 	const title = data.title ?? "";
+
+	useEffect(() => {
+		if (editing) inputRef.current?.select();
+	}, [editing]);
 
 	return (
 		<div className="group relative size-full" style={{ width, height }}>
@@ -40,7 +45,7 @@ export function FrameNodeView({
 			<div className="absolute -top-7 left-0 flex items-center gap-1">
 				{editing ? (
 					<input
-						autoFocus
+						ref={inputRef}
 						defaultValue={title}
 						onBlur={(e) => {
 							updateNodeData(id, { title: e.target.value });

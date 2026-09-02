@@ -7,10 +7,12 @@ export function duplicateNodes(
 	edges: Edge[] = [],
 ): { nodes: Node[]; edges: Edge[] } {
 	const idMap = new Map<string, string>();
-	nodes.forEach((n) => idMap.set(n.id, crypto.randomUUID()));
+	for (const n of nodes) {
+		idMap.set(n.id, crypto.randomUUID());
+	}
 
 	const clonedNodes = nodes.map((n) => {
-		const newId = idMap.get(n.id)!;
+		const newId = idMap.get(n.id) ?? crypto.randomUUID();
 		const newParent = n.parentId ? idMap.get(n.parentId) : undefined;
 		return {
 			...n,
@@ -25,15 +27,12 @@ export function duplicateNodes(
 		};
 	});
 
-	const clonedEdges = edges
-		.filter((e) => idMap.has(e.source) && idMap.has(e.target))
-		.map((e) => ({
-			...e,
-			id: crypto.randomUUID(),
-			source: idMap.get(e.source)!,
-			target: idMap.get(e.target)!,
-			selected: true,
-		}));
+	const clonedEdges = edges.flatMap((e) => {
+		const source = idMap.get(e.source);
+		const target = idMap.get(e.target);
+		if (!source || !target) return [];
+		return [{ ...e, id: crypto.randomUUID(), source, target, selected: true }];
+	});
 
 	return { nodes: clonedNodes, edges: clonedEdges };
 }

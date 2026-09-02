@@ -114,6 +114,9 @@ export function TodoNodeView({
 					}}
 				/>
 			) : null}
+			{/* Not a control: stops canvas drag from stealing events aimed at the
+			    inputs and checkboxes nested inside. */}
+			{/* biome-ignore lint/a11y/noStaticElementInteractions: event firewall, not an interactive element */}
 			<div
 				onPointerDown={(e) => {
 					if ((e.target as Element).closest("input, button, label")) {

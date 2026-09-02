@@ -421,6 +421,9 @@ function Board() {
 						onAddUrl={() => setUrlOpen(true)}
 						onAddFiles={(files) => addFiles(files, boardCenter())}
 					/>
+					{/* Drop target for files and URLs dragged onto the canvas. Keyboard
+					    interaction is handled by React Flow and the board shortcuts. */}
+					{/* biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop surface, not a control */}
 					<div
 						ref={wrapperRef}
 						className="min-h-0 flex-1"

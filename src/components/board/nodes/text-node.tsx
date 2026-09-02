@@ -4,7 +4,7 @@ import {
 	NodeResizer,
 	useReactFlow,
 } from "@xyflow/react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useBoardCommit } from "#/lib/board/history-context";
 import { NodeHandles } from "../node-handles";
 
@@ -27,6 +27,11 @@ export function TextNodeView({
 	const { updateNodeData } = useReactFlow();
 	const commit = useBoardCommit();
 	const [editing, setEditing] = useState(false);
+	const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+	useEffect(() => {
+		if (editing) textareaRef.current?.focus();
+	}, [editing]);
 
 	const text = data.text ?? "";
 	const color = data.color ?? "currentColor";
@@ -42,6 +47,9 @@ export function TextNodeView({
 				lineClassName="!border-gray-900/40"
 				handleClassName="!bg-white !border !border-gray-900/40 !size-2"
 			/>
+			{/* Double-click to edit. A keyboard path for this needs React Flow's
+			    node focus model, which the board does not wire up yet. */}
+			{/* biome-ignore lint/a11y/noStaticElementInteractions: keyboard path tracked as board-wide a11y work */}
 			<div
 				onDoubleClick={() => {
 					commit();
@@ -58,7 +66,7 @@ export function TextNodeView({
 			>
 				{editing ? (
 					<textarea
-						autoFocus
+						ref={textareaRef}
 						defaultValue={text}
 						onBlur={(e) => {
 							updateNodeData(id, { text: e.target.value });

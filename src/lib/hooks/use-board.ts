@@ -62,6 +62,10 @@ function parseSnapshot(raw: string | null): {
 }
 
 export function useBoard(project: Project) {
+	// Parsed once per project on purpose. Depending on project.content would
+	// re-parse and discard in-progress edits every time an autosave-triggered
+	// router.invalidate() returns fresh content.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: initial value, keyed by project
 	const initial = useMemo(() => parseSnapshot(project.content), [project.id]);
 	const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initial.nodes);
 	const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initial.edges);

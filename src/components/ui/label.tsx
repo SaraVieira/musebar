@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 
 function Label({ className, ...props }: React.ComponentProps<"label">) {
 	return (
+		// Generic primitive: htmlFor and children are supplied by callers.
+		// biome-ignore lint/a11y/noLabelWithoutControl: association is the caller's responsibility
 		<label
 			data-slot="label"
 			className={cn(

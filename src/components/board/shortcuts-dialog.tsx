@@ -75,9 +75,9 @@ export function ShortcutsDialog({
 									>
 										<span>{s.label}</span>
 										<span className="flex shrink-0 items-center gap-1">
-											{s.keys.map((k, i) => (
+											{s.keys.map((k) => (
 												<kbd
-													key={i}
+													key={`${s.label}-${k}`}
 													className="text-foreground border-border bg-background inline-flex h-6 min-w-6 items-center justify-center rounded border px-1.5 font-sans text-[11px] font-medium shadow-[inset_0_-1px_0_var(--border)]"
 												>
 													{k}

@@ -67,14 +67,19 @@ function NoChanges() {
 }
 
 export const ChangeLogger = ({ limit = 20 }: ChangeLoggerProps) => {
-	const [changes, setChanges] = useState<NodeChange[]>([]);
+	const [changes, setChanges] = useState<
+		Array<{ id: string; change: NodeChange }>
+	>([]);
 	const store = useStoreApi();
 
 	// Memoize the callback for handling node changes
 	const handleNodeChanges: OnNodesChange = useCallback(
 		(newChanges: NodeChange[]) => {
 			setChanges((prevChanges) =>
-				[...newChanges, ...prevChanges].slice(0, limit),
+				[
+					...newChanges.map((change) => ({ id: crypto.randomUUID(), change })),
+					...prevChanges,
+				].slice(0, limit),
 			);
 		},
 		[limit],
@@ -91,9 +96,7 @@ export const ChangeLogger = ({ limit = 20 }: ChangeLoggerProps) => {
 			{changes.length === 0 ? (
 				<NoChanges />
 			) : (
-				changes.map((change, index) => (
-					<ChangeInfo key={index} change={change} />
-				))
+				changes.map(({ id, change }) => <ChangeInfo key={id} change={change} />)
 			)}
 		</>
 	);
