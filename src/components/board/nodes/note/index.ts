@@ -1,1 +1,1 @@
-export { NoteNodeView, type NoteNode } from "./note-node";
+export { type NoteNode, NoteNodeView } from "./note-node";

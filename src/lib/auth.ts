@@ -1,48 +1,49 @@
 import "@tanstack/react-start/server-only";
-import { env } from "#/env";
 import { betterAuth } from "better-auth";
-import { APIError } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { APIError } from "better-auth/api";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { db } from "#/db";
 import { user } from "#/db/schema";
+import { env } from "#/env";
 
 async function anyUserExists() {
-  const rows = await db.select({ id: user.id }).from(user).limit(1);
-  return rows.length > 0;
+	const rows = await db.select({ id: user.id }).from(user).limit(1);
+	return rows.length > 0;
 }
 
 export const hasGithubAuth = Boolean(
-  env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET,
+	env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET,
 );
 
 export const auth = betterAuth({
-  database: drizzleAdapter(db, { provider: "sqlite" }),
-  emailAndPassword: {
-    enabled: true,
-  },
-  socialProviders: hasGithubAuth
-    ? {
-        github: {
-          enabled: true,
-          clientId: env.GITHUB_CLIENT_ID!,
-          clientSecret: env.GITHUB_CLIENT_SECRET!,
-        },
-      }
-    : {},
-  databaseHooks: {
-    user: {
-      create: {
-        before: async () => {
-          if (await anyUserExists()) {
-            throw new APIError("FORBIDDEN", {
-              message: "Registration is closed. This is a single-user instance.",
-            });
-          }
-        },
-      },
-    },
-  },
+	database: drizzleAdapter(db, { provider: "sqlite" }),
+	emailAndPassword: {
+		enabled: true,
+	},
+	socialProviders: hasGithubAuth
+		? {
+				github: {
+					enabled: true,
+					clientId: env.GITHUB_CLIENT_ID!,
+					clientSecret: env.GITHUB_CLIENT_SECRET!,
+				},
+			}
+		: {},
+	databaseHooks: {
+		user: {
+			create: {
+				before: async () => {
+					if (await anyUserExists()) {
+						throw new APIError("FORBIDDEN", {
+							message:
+								"Registration is closed. This is a single-user instance.",
+						});
+					}
+				},
+			},
+		},
+	},
 
-  plugins: [tanstackStartCookies()],
+	plugins: [tanstackStartCookies()],
 });

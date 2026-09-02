@@ -1,27 +1,27 @@
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, type ReactNode, useContext } from "react";
 
 interface BoardHistoryContextValue {
-  commit: () => void;
+	commit: () => void;
 }
 
 const BoardHistoryContext = createContext<BoardHistoryContextValue>({
-  commit: () => {},
+	commit: () => {},
 });
 
 export function BoardHistoryProvider({
-  commit,
-  children,
+	commit,
+	children,
 }: {
-  commit: () => void;
-  children: ReactNode;
+	commit: () => void;
+	children: ReactNode;
 }) {
-  return (
-    <BoardHistoryContext.Provider value={{ commit }}>
-      {children}
-    </BoardHistoryContext.Provider>
-  );
+	return (
+		<BoardHistoryContext.Provider value={{ commit }}>
+			{children}
+		</BoardHistoryContext.Provider>
+	);
 }
 
 export function useBoardCommit() {
-  return useContext(BoardHistoryContext).commit;
+	return useContext(BoardHistoryContext).commit;
 }

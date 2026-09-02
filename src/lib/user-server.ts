@@ -4,14 +4,14 @@ import { user } from "#/db/schema";
 import { hasGithubAuth } from "#/lib/auth";
 
 export const anyUserExists = createServerFn({ method: "GET" }).handler(
-  async () => {
-    const rows = await db.select({ id: user.id }).from(user).limit(1);
-    return rows.length > 0;
-  },
+	async () => {
+		const rows = await db.select({ id: user.id }).from(user).limit(1);
+		return rows.length > 0;
+	},
 );
 
 export const getAuthProviders = createServerFn({ method: "GET" }).handler(
-  async () => {
-    return { github: hasGithubAuth };
-  },
+	async () => {
+		return { github: hasGithubAuth };
+	},
 );

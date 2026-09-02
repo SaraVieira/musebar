@@ -17,7 +17,6 @@ import { Route as ApiUploadsRouteImport } from './routes/api/uploads'
 import { Route as ProjectsIdRouteImport } from './routes/projects.$id'
 import { Route as ApiAssetsIdRouteImport } from './routes/api/assets/$id'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
-import { Route as ApiTrpcSplatRouteImport } from './routes/api.trpc.$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -59,11 +58,6 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiTrpcSplatRoute = ApiTrpcSplatRouteImport.update({
-  id: '/api/trpc/$',
-  path: '/api/trpc/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -74,7 +68,6 @@ export interface FileRoutesByFullPath {
   '/projects/$id': typeof ProjectsIdRoute
   '/api/assets/$id': typeof ApiAssetsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/trpc/$': typeof ApiTrpcSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -85,7 +78,6 @@ export interface FileRoutesByTo {
   '/projects/$id': typeof ProjectsIdRoute
   '/api/assets/$id': typeof ApiAssetsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/trpc/$': typeof ApiTrpcSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -97,7 +89,6 @@ export interface FileRoutesById {
   '/projects/$id': typeof ProjectsIdRoute
   '/api/assets/$id': typeof ApiAssetsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/trpc/$': typeof ApiTrpcSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -110,7 +101,6 @@ export interface FileRouteTypes {
     | '/projects/$id'
     | '/api/assets/$id'
     | '/api/auth/$'
-    | '/api/trpc/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -121,7 +111,6 @@ export interface FileRouteTypes {
     | '/projects/$id'
     | '/api/assets/$id'
     | '/api/auth/$'
-    | '/api/trpc/$'
   id:
     | '__root__'
     | '/'
@@ -132,7 +121,6 @@ export interface FileRouteTypes {
     | '/projects/$id'
     | '/api/assets/$id'
     | '/api/auth/$'
-    | '/api/trpc/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -144,7 +132,6 @@ export interface RootRouteChildren {
   ProjectsIdRoute: typeof ProjectsIdRoute
   ApiAssetsIdRoute: typeof ApiAssetsIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
-  ApiTrpcSplatRoute: typeof ApiTrpcSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -205,13 +192,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/trpc/$': {
-      id: '/api/trpc/$'
-      path: '/api/trpc/$'
-      fullPath: '/api/trpc/$'
-      preLoaderRoute: typeof ApiTrpcSplatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -224,7 +204,6 @@ const rootRouteChildren: RootRouteChildren = {
   ProjectsIdRoute: ProjectsIdRoute,
   ApiAssetsIdRoute: ApiAssetsIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
-  ApiTrpcSplatRoute: ApiTrpcSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
