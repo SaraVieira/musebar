@@ -44,6 +44,7 @@ import { ImageNodeView } from "#/components/board/nodes/image-node";
 import { MapNodeView } from "#/components/board/nodes/map-node";
 import { ModelNodeView } from "#/components/board/nodes/model-node";
 import { NoteNodeView } from "#/components/board/nodes/note";
+import { PdfNodeView } from "#/components/board/nodes/pdf-node";
 import { TextNodeView } from "#/components/board/nodes/text-node";
 import { TodoNodeView } from "#/components/board/nodes/todo-node";
 import { getSession } from "#/lib/auth-server";
@@ -75,6 +76,7 @@ const nodeTypes: NodeTypes = {
   embed: EmbedNodeView,
   map: MapNodeView,
   model: ModelNodeView,
+  pdf: PdfNodeView,
 };
 
 export const Route = createFileRoute("/projects/$id")({

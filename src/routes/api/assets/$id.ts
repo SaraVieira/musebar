@@ -11,7 +11,12 @@ function safeFilename(name: string) {
 }
 
 function isInlineSafeMime(mime: string) {
-  return mime.startsWith("image/") || mime.startsWith("video/") || mime.startsWith("audio/");
+  return (
+    mime.startsWith("image/") ||
+    mime.startsWith("video/") ||
+    mime.startsWith("audio/") ||
+    mime === "application/pdf"
+  );
 }
 
 async function handler({

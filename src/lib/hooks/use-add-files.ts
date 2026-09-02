@@ -5,6 +5,7 @@ import {
   makeFileNode,
   makeImageNode,
   makeModelNode,
+  makePdfNode,
 } from "#/lib/board/factories";
 import { detectModelFormat } from "#/components/board/nodes/model-node";
 import { readImageDims } from "#/lib/media-dims";
@@ -19,6 +20,12 @@ type XY = { x: number; y: number };
 
 const DEFAULT_IMAGE_DIMS = { w: 240, h: 180 };
 
+function isPdf(file: File, mimeType: string) {
+  return (
+    mimeType === "application/pdf" || /\.pdf$/i.test(file.name)
+  );
+}
+
 export function useAddFiles(setNodes: SetNodes, uploadFile: UploadFile) {
   return useCallback(
     async (files: File[], at: XY) => {
@@ -30,6 +37,8 @@ export function useAddFiles(setNodes: SetNodes, uploadFile: UploadFile) {
           const modelFormat = detectModelFormat(file.name);
           if (modelFormat) {
             toAdd.push(makeModelNode(at, i, file, uploaded, modelFormat));
+          } else if (isPdf(file, uploaded.mimeType)) {
+            toAdd.push(makePdfNode(at, i, file, uploaded));
           } else if (uploaded.mimeType.startsWith("image/")) {
             const dims = await readImageDims(file).catch(
               () => DEFAULT_IMAGE_DIMS,

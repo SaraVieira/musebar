@@ -9,6 +9,7 @@ import {
   makeEmbedNode,
   makeImageNodeFromUrl,
   makeMapNode,
+  makePdfNodeFromUrl,
 } from "#/lib/board/factories";
 import { readImageDimsFromUrl } from "#/lib/media-dims";
 
@@ -16,11 +17,20 @@ type SetNodes = (updater: (nodes: Node[]) => Node[]) => void;
 type XY = { x: number; y: number };
 
 const IMAGE_EXT_RE = /\.(png|jpe?g|gif|webp|svg|avif|bmp|ico)(?:$|[?#])/i;
+const PDF_EXT_RE = /\.pdf(?:$|[?#])/i;
 const DEFAULT_IMAGE_DIMS = { w: 480, h: 320 };
 
 function isImageUrl(url: string): boolean {
   try {
     return IMAGE_EXT_RE.test(new URL(url).pathname);
+  } catch {
+    return false;
+  }
+}
+
+function isPdfUrl(url: string): boolean {
+  try {
+    return PDF_EXT_RE.test(new URL(url).pathname);
   } catch {
     return false;
   }
@@ -64,6 +74,10 @@ export function useAddByUrl(setNodes: SetNodes) {
           () => DEFAULT_IMAGE_DIMS,
         );
         setNodes((ns) => [...ns, makeImageNodeFromUrl(at, url, dims)]);
+        return;
+      }
+      if (isPdfUrl(url)) {
+        setNodes((ns) => [...ns, makePdfNodeFromUrl(at, url)]);
         return;
       }
       const embed = detectEmbed(url);

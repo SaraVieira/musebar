@@ -12,6 +12,10 @@ import {
   type ModelFormat,
   type ModelNode,
 } from "#/components/board/nodes/model-node";
+import {
+  PDF_DRAG_HANDLE_CLASS,
+  type PdfNode,
+} from "#/components/board/nodes/pdf-node";
 import type { NoteNode } from "#/components/board/nodes/note";
 import type { TextNode } from "#/components/board/nodes/text-node";
 import type { TodoNode } from "#/components/board/nodes/todo-node";
@@ -221,6 +225,51 @@ export function makeModelNode(
       mimeType: uploaded.mimeType || "application/octet-stream",
       format,
     },
+  };
+}
+
+export function makePdfNode(
+  center: XY,
+  offsetIndex: number,
+  file: { name: string; size?: number },
+  uploaded: { src: string },
+): PdfNode {
+  const w = 360;
+  const h = 460;
+  const offset = offsetIndex * 16;
+  return {
+    id: crypto.randomUUID(),
+    type: "pdf",
+    position: { x: center.x - w / 2 + offset, y: center.y - h / 2 + offset },
+    width: w,
+    height: h,
+    dragHandle: `.${PDF_DRAG_HANDLE_CLASS}`,
+    data: {
+      src: uploaded.src,
+      name: file.name,
+      size: file.size,
+    },
+  };
+}
+
+export function makePdfNodeFromUrl(center: XY, url: string): PdfNode {
+  const w = 360;
+  const h = 460;
+  const name = (() => {
+    try {
+      return decodeURIComponent(new URL(url).pathname.split("/").pop() ?? url);
+    } catch {
+      return url;
+    }
+  })();
+  return {
+    id: crypto.randomUUID(),
+    type: "pdf",
+    position: { x: center.x - w / 2, y: center.y - h / 2 },
+    width: w,
+    height: h,
+    dragHandle: `.${PDF_DRAG_HANDLE_CLASS}`,
+    data: { src: url, name },
   };
 }
 
