@@ -9,11 +9,8 @@ import {
 } from "@xyflow/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import {
-	type BoardSettings,
-	DEFAULT_BOARD_SETTINGS,
-	normalizeSettings,
-} from "#/lib/board/settings";
+import type { BoardSettings } from "#/lib/board/settings";
+import { parseSnapshot } from "#/lib/board/snapshot";
 import { generateBoardThumbnail } from "#/lib/board/thumbnail";
 import { readImageDims } from "#/lib/media-dims";
 import { type getProject, updateProjectContent } from "#/lib/projects-server";
@@ -31,34 +28,6 @@ async function uploadFile(file: File, projectId: string) {
 		throw new Error(`Upload failed: ${res.status} ${await res.text()}`);
 	}
 	return (await res.json()) as { id: string; src: string; mimeType: string };
-}
-
-function parseSnapshot(raw: string | null): {
-	nodes: Node[];
-	edges: Edge[];
-	settings: BoardSettings;
-} {
-	const empty = {
-		nodes: [] as Node[],
-		edges: [] as Edge[],
-		settings: DEFAULT_BOARD_SETTINGS,
-	};
-	if (!raw) return empty;
-	try {
-		const parsed = JSON.parse(raw);
-		if (parsed && Array.isArray(parsed.nodes) && Array.isArray(parsed.edges)) {
-			return {
-				nodes: parsed.nodes.map((n: Node) =>
-					n.type === "embed" && !n.dragHandle
-						? { ...n, dragHandle: ".embed-drag-handle" }
-						: n,
-				),
-				edges: parsed.edges,
-				settings: normalizeSettings(parsed.settings),
-			};
-		}
-	} catch {}
-	return empty;
 }
 
 export function useBoard(project: Project) {

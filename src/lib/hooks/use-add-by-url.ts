@@ -20,7 +20,7 @@ const IMAGE_EXT_RE = /\.(png|jpe?g|gif|webp|svg|avif|bmp|ico)(?:$|[?#])/i;
 const PDF_EXT_RE = /\.pdf(?:$|[?#])/i;
 const DEFAULT_IMAGE_DIMS = { w: 480, h: 320 };
 
-function isImageUrl(url: string): boolean {
+export function isImageUrl(url: string): boolean {
 	try {
 		return IMAGE_EXT_RE.test(new URL(url).pathname);
 	} catch {
@@ -28,7 +28,7 @@ function isImageUrl(url: string): boolean {
 	}
 }
 
-function isPdfUrl(url: string): boolean {
+export function isPdfUrl(url: string): boolean {
 	try {
 		return PDF_EXT_RE.test(new URL(url).pathname);
 	} catch {
@@ -36,7 +36,7 @@ function isPdfUrl(url: string): boolean {
 	}
 }
 
-function isGoogleMapsUrl(url: string): boolean {
+export function isGoogleMapsUrl(url: string): boolean {
 	try {
 		const u = new URL(url);
 		const host = u.hostname.toLowerCase();

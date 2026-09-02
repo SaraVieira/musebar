@@ -105,6 +105,9 @@ function AutoFit({ trigger }: { trigger: string }) {
 	// biome-ignore lint/correctness/useExhaustiveDependencies: intentional re-run trigger
 	useEffect(() => {
 		const id = requestAnimationFrame(() => {
+			// `.fit()` is drei's Bounds API, not a focused test. Do not accept
+			// Biome's suggested rewrite to `.it()` — it breaks the auto-fit.
+			// biome-ignore lint/suspicious/noFocusedTests: drei Bounds.fit(), not a test
 			bounds.refresh().clip().fit();
 		});
 		return () => cancelAnimationFrame(id);
