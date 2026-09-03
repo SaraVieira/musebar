@@ -38,8 +38,14 @@ import { DevTools } from "#/components/devtools";
 import { Button } from "#/components/ui/button";
 import { getSession } from "#/lib/auth-server";
 import { duplicateNodes } from "#/lib/board/duplicate";
+import {
+	BoardEditingProvider,
+	useBoardEditing,
+} from "#/lib/board/editing-context";
 import { makeCreatableNode } from "#/lib/board/factories";
 import { BoardHistoryProvider } from "#/lib/board/history-context";
+import { nodeIdFromEventTarget } from "#/lib/board/node-focus";
+import { nodeAriaLabel } from "#/lib/board/node-label";
 import type { CreatableNodeType } from "#/lib/board/node-types";
 import { useAddByUrl } from "#/lib/hooks/use-add-by-url";
 import { useAddFiles } from "#/lib/hooks/use-add-files";
@@ -49,6 +55,7 @@ import { useBoardPaste } from "#/lib/hooks/use-board-paste";
 import { useBoardShortcuts } from "#/lib/hooks/use-board-shortcuts";
 import { useFrameParenting } from "#/lib/hooks/use-frame-parenting";
 import { getProject } from "#/lib/projects-server";
+import { isEditableTarget } from "#/lib/utils";
 
 export const Route = createFileRoute("/projects/$id")({
 	// Without this the match is reused across /projects/A -> /projects/B: the
@@ -70,7 +77,9 @@ export const Route = createFileRoute("/projects/$id")({
 function BoardRoute() {
 	return (
 		<ReactFlowProvider>
-			<Board />
+			<BoardEditingProvider>
+				<Board />
+			</BoardEditingProvider>
 		</ReactFlowProvider>
 	);
 }
@@ -104,6 +113,7 @@ function Board() {
 		uploadFile,
 	} = useBoard(project);
 	const rf = useReactFlow();
+	const { startEditing } = useBoardEditing();
 	const history = useBoardHistory(setNodes, setEdges);
 
 	const boardCenter = useCallback(() => {
@@ -273,6 +283,22 @@ function Board() {
 			.catch(() => toast.error("Couldn't copy link"));
 	}, []);
 
+	// React Flow owns the focusable element (.react-flow__node), so Enter has to
+	// be caught here rather than inside a node view: focus sits on the ancestor
+	// and the event never reaches the node's own content div.
+	const onCanvasKeyDown = useCallback(
+		(e: React.KeyboardEvent<HTMLDivElement>) => {
+			if (e.key !== "Enter" || e.defaultPrevented) return;
+			if (isEditableTarget(e.target)) return;
+			const id = nodeIdFromEventTarget(e.target);
+			if (!id) return;
+			e.preventDefault();
+			history.commit();
+			startEditing(id);
+		},
+		[history, startEditing],
+	);
+
 	const onDrop = useCallback(
 		async (e: React.DragEvent<HTMLDivElement>) => {
 			e.preventDefault();
@@ -290,6 +316,22 @@ function Board() {
 	);
 
 	useBoardPaste({ getCenter: boardCenter, onFiles: addFiles, onUrl: addByUrl });
+
+	// React Flow reads the accessible name from `node.ariaLabel`, so labels are
+	// attached here rather than stored on the node. Results are cached by node
+	// identity: mapping with a fresh object every render would break React
+	// Flow's per-node memoisation and re-render the whole board on any change.
+	const labelled = useRef(new WeakMap<Node, Node>());
+	const labelledNodes = useMemo(() => {
+		const cache = labelled.current;
+		return nodes.map((n) => {
+			const hit = cache.get(n);
+			if (hit) return hit;
+			const withLabel = { ...n, ariaLabel: nodeAriaLabel(n) };
+			cache.set(n, withLabel);
+			return withLabel;
+		});
+	}, [nodes]);
 
 	const defaultEdgeOptions = useMemo(
 		() => ({
@@ -366,9 +408,10 @@ function Board() {
 						className="min-h-0 flex-1"
 						onDragOver={(e) => e.preventDefault()}
 						onDrop={onDrop}
+						onKeyDown={onCanvasKeyDown}
 					>
 						<ReactFlow
-							nodes={nodes}
+							nodes={labelledNodes}
 							edges={edges}
 							nodeTypes={nodeTypes}
 							onNodesChange={onNodesChange}
@@ -404,6 +447,7 @@ function Board() {
 							minZoom={0.1}
 							maxZoom={2.5}
 							colorMode="dark"
+							aria-label="Board canvas"
 							snapToGrid={settings.snap}
 							snapGrid={[settings.gridSize, settings.gridSize]}
 						>

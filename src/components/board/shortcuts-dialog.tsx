@@ -31,6 +31,16 @@ const GROUPS: { name: string; items: Shortcut[] }[] = [
 		],
 	},
 	{
+		name: "Keyboard navigation",
+		items: [
+			{ keys: ["Tab"], label: "Move focus between nodes" },
+			{ keys: ["Enter"], label: "Edit the focused node" },
+			{ keys: ["Esc"], label: "Stop editing / deselect" },
+			{ keys: ["Arrows"], label: "Move the selected node" },
+			{ keys: ["⇧", "Arrows"], label: "Move it further" },
+		],
+	},
+	{
 		name: "Canvas",
 		items: [
 			{ keys: ["Right-click", "node"], label: "Node actions menu" },

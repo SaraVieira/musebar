@@ -1,5 +1,6 @@
 import { type Node, type NodeProps, useReactFlow } from "@xyflow/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+import { useNodeEditing } from "#/lib/board/editing-context";
 import { useBoardCommit } from "#/lib/board/history-context";
 import { BoardResizer } from "../board-resizer";
 import { NodeHandles } from "../node-handles";
@@ -20,29 +21,31 @@ export function FrameNodeView({
 }: NodeProps<FrameNode>) {
 	const { updateNodeData } = useReactFlow();
 	const commit = useBoardCommit();
-	const [editing, setEditing] = useState(false);
+	const { isEditing, startEditing, stopEditing } = useNodeEditing(id);
 	const inputRef = useRef<HTMLInputElement>(null);
 	const title = data.title ?? "";
 
 	useEffect(() => {
-		if (editing) inputRef.current?.select();
-	}, [editing]);
+		if (isEditing) inputRef.current?.select();
+	}, [isEditing]);
 
 	return (
 		<div className="group relative size-full" style={{ width, height }}>
 			<BoardResizer minWidth={200} minHeight={120} selected={selected} />
 			<div className="absolute -top-7 left-0 flex items-center gap-1">
-				{editing ? (
+				{isEditing ? (
 					<input
 						ref={inputRef}
 						defaultValue={title}
 						onBlur={(e) => {
 							updateNodeData(id, { title: e.target.value });
-							setEditing(false);
+							stopEditing();
 						}}
 						onKeyDown={(e) => {
 							e.stopPropagation();
-							if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+							if (e.key === "Enter" || e.key === "Escape") {
+								(e.target as HTMLInputElement).blur();
+							}
 						}}
 						onPointerDown={(e) => e.stopPropagation()}
 						className="rounded border border-gray-300 bg-white px-1.5 py-0.5 text-xs outline-none"
@@ -53,7 +56,7 @@ export function FrameNodeView({
 						type="button"
 						onDoubleClick={() => {
 							commit();
-							setEditing(true);
+							startEditing();
 						}}
 						className="cursor-text border-0 bg-transparent p-0 text-xs font-medium text-gray-700"
 					>

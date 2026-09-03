@@ -1,7 +1,8 @@
 import type { JSONContent } from "@tiptap/react";
 import { generateHTML } from "@tiptap/react";
 import { type Node, type NodeProps, useReactFlow } from "@xyflow/react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useNodeEditing } from "#/lib/board/editing-context";
 import { useBoardCommit } from "#/lib/board/history-context";
 import { BoardResizer } from "../../board-resizer";
 import { CARD_COLORS, ColorPicker } from "../../color-picker";
@@ -26,7 +27,7 @@ export function NoteNodeView({
 }: NodeProps<NoteNode>) {
 	const { updateNodeData } = useReactFlow();
 	const commit = useBoardCommit();
-	const [editing, setEditing] = useState(false);
+	const { isEditing, startEditing, stopEditing } = useNodeEditing(id);
 
 	const content = data.content ?? EMPTY_NOTE_DOC;
 	const color = data.color ?? CARD_COLORS[0].value;
@@ -51,22 +52,23 @@ export function NoteNodeView({
 					}}
 				/>
 			) : null}
-			{/* Double-click to edit. A keyboard path for this needs React Flow's
-			    node focus model, which the board does not wire up yet. */}
-			{/* biome-ignore lint/a11y/noStaticElementInteractions: keyboard path tracked as board-wide a11y work */}
+			{/* Double-click is a pointer shortcut for the same thing Enter does on
+			    the focused node; React Flow's node wrapper is the focusable,
+			    role-bearing element, so this div is not the control. */}
+			{/* biome-ignore lint/a11y/noStaticElementInteractions: keyboard path lives on React Flow's node wrapper */}
 			<div
 				onDoubleClick={() => {
 					commit();
-					setEditing(true);
+					startEditing();
 				}}
 				className="size-full overflow-auto rounded-xl p-3 text-sm text-gray-800 shadow-md"
 				style={{ background: color }}
 			>
-				{editing ? (
+				{isEditing ? (
 					<NoteEditor
 						initialContent={content}
 						onChange={(c) => updateNodeData(id, { content: c })}
-						onBlur={() => setEditing(false)}
+						onBlur={stopEditing}
 					/>
 				) : (
 					<div
@@ -78,7 +80,7 @@ export function NoteNodeView({
 						dangerouslySetInnerHTML={{
 							__html:
 								html ||
-								`<p style="opacity:0.5;margin:0;">Double-click to edit</p>`,
+								`<p style="opacity:0.5;margin:0;">Double-click or press Enter to edit</p>`,
 						}}
 					/>
 				)}

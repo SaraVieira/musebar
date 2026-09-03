@@ -186,3 +186,20 @@
         min-height: 100%;
     }
 }
+
+/*
+ * React Flow gives nodes and edges tabIndex=0 but ships no focus styling, so
+ * keyboard users had no way to see where they were on the board.
+ * :focus-visible keeps the ring off mouse interactions.
+ */
+.react-flow__node:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+    border-radius: var(--radius-lg, 0.5rem);
+}
+
+/* Edges are <g> elements, so only the outline applies here. */
+.react-flow__edge:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+}

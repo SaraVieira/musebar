@@ -9,6 +9,6 @@ export default defineConfig({
 	test: {
 		// Pure functions only — no component or DOM tests, so no jsdom needed.
 		environment: "node",
-		include: ["src/**/*.test.ts"],
+		include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
 	},
 });
