@@ -30,11 +30,10 @@ async function uploadFile(file: File, projectId: string) {
 }
 
 export function useBoard(project: Project) {
-	// Parsed once per project on purpose. Depending on project.content would
-	// re-parse and discard in-progress edits every time an autosave-triggered
-	// router.invalidate() returns fresh content.
-	// biome-ignore lint/correctness/useExhaustiveDependencies: initial value, keyed by project
-	const initial = useMemo(() => parseSnapshot(project.content), [project.id]);
+	// Parsed once, at mount. A later router.invalidate() returning fresh content
+	// must not reset the board mid-edit; switching projects remounts this whole
+	// tree via the route's remountDeps, which is what re-runs this.
+	const [initial] = useState(() => parseSnapshot(project.content));
 	const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initial.nodes);
 	const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initial.edges);
 	const [settings, setSettings] = useState<BoardSettings>(initial.settings);

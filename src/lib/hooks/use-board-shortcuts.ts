@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
 	CREATABLE_NODES,
 	type CreatableNodeType,
@@ -12,6 +12,12 @@ interface Handlers {
 }
 
 export function useBoardShortcuts(handlers: Handlers) {
+	// Callers pass a fresh object literal every render. Reading through a ref
+	// keeps the effect's dependency list empty, so the window listener is bound
+	// once instead of being torn down and re-added on every board render.
+	const handlersRef = useRef(handlers);
+	handlersRef.current = handlers;
+
 	useEffect(() => {
 		function onKey(e: KeyboardEvent) {
 			if (isEditableTarget(e.target)) return;
@@ -21,19 +27,19 @@ export function useBoardShortcuts(handlers: Handlers) {
 
 			if (meta && key === "/") {
 				e.preventDefault();
-				handlers.onOpenShortcuts();
+				handlersRef.current.onOpenShortcuts();
 				return;
 			}
 			if (meta && key.toLowerCase() === "d") {
 				e.preventDefault();
-				handlers.onDuplicate();
+				handlersRef.current.onDuplicate();
 				return;
 			}
 			if (meta || e.altKey) return;
 
 			if (key === "?") {
 				e.preventDefault();
-				handlers.onOpenShortcuts();
+				handlersRef.current.onOpenShortcuts();
 				return;
 			}
 			const creatable = CREATABLE_NODES.find(
@@ -41,10 +47,10 @@ export function useBoardShortcuts(handlers: Handlers) {
 			);
 			if (creatable) {
 				e.preventDefault();
-				handlers.onAddNode(creatable.type);
+				handlersRef.current.onAddNode(creatable.type);
 			}
 		}
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
-	}, [handlers]);
+	}, []);
 }

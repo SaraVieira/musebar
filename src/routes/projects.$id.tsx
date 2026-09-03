@@ -51,6 +51,10 @@ import { useFrameParenting } from "#/lib/hooks/use-frame-parenting";
 import { getProject } from "#/lib/projects-server";
 
 export const Route = createFileRoute("/projects/$id")({
+	// Without this the match is reused across /projects/A -> /projects/B: the
+	// board state (and its undo history) would survive while project.id changed
+	// underneath it, so the next edit would save board A's content into B.
+	remountDeps: ({ params }) => params.id,
 	beforeLoad: async () => {
 		const session = await getSession();
 		if (!session) throw redirect({ href: "/login" });
