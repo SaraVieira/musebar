@@ -31,10 +31,13 @@ export function BookmarkNodeView({
 				className="flex size-full flex-col overflow-hidden rounded-xl bg-white text-gray-800 no-underline shadow-md"
 			>
 				{data.image ? (
+					// object-contain so a preview is never silently cropped, matching
+					// image nodes. og:images are typically 1.91:1 while this strip is
+					// wider, so the tinted band is what the letterboxing lands on.
 					<img
 						src={data.image}
 						alt=""
-						className="h-1/2 w-full object-cover"
+						className="h-1/2 w-full bg-gray-100 object-contain"
 						draggable={false}
 					/>
 				) : (

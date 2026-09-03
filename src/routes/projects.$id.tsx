@@ -19,6 +19,7 @@ import "@xyflow/react/dist/style.css";
 import type { BackgroundVariant } from "@xyflow/react";
 import { ArrowLeft, Keyboard, Redo2, Undo2 } from "lucide-react";
 import { toast } from "sonner";
+import { BoardEmptyState } from "#/components/board/board-empty-state";
 import { BoardSettingsButton } from "#/components/board/board-settings";
 import { BoardSidebar } from "#/components/board/board-sidebar";
 import { ExportMenu } from "#/components/board/export-menu";
@@ -415,7 +416,7 @@ function Board() {
 					{/* biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop surface, not a control */}
 					<div
 						ref={wrapperRef}
-						className="min-h-0 flex-1"
+						className="relative min-h-0 flex-1"
 						onDragOver={(e) => e.preventDefault()}
 						onDrop={onDrop}
 						onKeyDown={onCanvasKeyDown}
@@ -473,6 +474,7 @@ function Board() {
 							{import.meta.env.DEV ? <DevTools position="top-left" /> : null}
 							<Controls />
 						</ReactFlow>
+						{nodes.length === 0 ? <BoardEmptyState /> : null}
 					</div>
 				</div>
 				<UrlDialog
