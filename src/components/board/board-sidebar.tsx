@@ -1,12 +1,4 @@
-import {
-	Frame,
-	Image as ImageIcon,
-	Link2,
-	ListChecks,
-	Paperclip,
-	StickyNote,
-	Type,
-} from "lucide-react";
+import { Image as ImageIcon, Link2, Paperclip } from "lucide-react";
 import { type ReactNode, useRef } from "react";
 import {
 	Tooltip,
@@ -14,7 +6,12 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "#/components/ui/tooltip";
+import {
+	CREATABLE_NODES,
+	type CreatableNodeType,
+} from "#/lib/board/node-types";
 import { cn } from "#/lib/utils";
+import { CREATABLE_NODE_ICONS } from "./nodes/registry";
 
 interface SidebarButtonProps {
 	icon: ReactNode;
@@ -42,17 +39,11 @@ function SidebarButton({ icon, label, onClick }: SidebarButtonProps) {
 }
 
 export function BoardSidebar({
-	onAddNote,
-	onAddTodo,
-	onAddText,
-	onAddFrame,
+	onAddNode,
 	onAddUrl,
 	onAddFiles,
 }: {
-	onAddNote: () => void;
-	onAddTodo: () => void;
-	onAddText: () => void;
-	onAddFrame: () => void;
+	onAddNode: (type: CreatableNodeType) => void;
 	onAddUrl: () => void;
 	onAddFiles: (files: File[]) => void;
 }) {
@@ -62,26 +53,17 @@ export function BoardSidebar({
 	return (
 		<TooltipProvider delay={150}>
 			<aside className="bg-background flex w-14 shrink-0 flex-col items-center gap-1 border-r py-3">
-				<SidebarButton
-					icon={<StickyNote className="size-5" />}
-					label="Note"
-					onClick={onAddNote}
-				/>
-				<SidebarButton
-					icon={<ListChecks className="size-5" />}
-					label="Todo list"
-					onClick={onAddTodo}
-				/>
-				<SidebarButton
-					icon={<Type className="size-5" />}
-					label="Text"
-					onClick={onAddText}
-				/>
-				<SidebarButton
-					icon={<Frame className="size-5" />}
-					label="Frame"
-					onClick={onAddFrame}
-				/>
+				{CREATABLE_NODES.map(({ type, label, shortcut }) => {
+					const Icon = CREATABLE_NODE_ICONS[type];
+					return (
+						<SidebarButton
+							key={type}
+							icon={<Icon className="size-5" />}
+							label={`${label} (${shortcut.toUpperCase()})`}
+							onClick={() => onAddNode(type)}
+						/>
+					);
+				})}
 				<div className="bg-border my-1 h-px w-6" />
 				<SidebarButton
 					icon={<Link2 className="size-5" />}

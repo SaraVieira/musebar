@@ -20,11 +20,12 @@ import {
 import type { TextNode } from "#/components/board/nodes/text-node";
 import type { TodoNode } from "#/components/board/nodes/todo-node";
 
+import { type CreatableNodeType, NODE_TYPE_META } from "#/lib/board/node-types";
+
 type XY = { x: number; y: number };
 
-export function makeNoteNode(center: XY): NoteNode {
-	const w = 240;
-	const h = 160;
+function makeNoteNode(center: XY): NoteNode {
+	const { w, h } = NODE_TYPE_META.note.size;
 	return {
 		id: crypto.randomUUID(),
 		type: "note",
@@ -35,9 +36,8 @@ export function makeNoteNode(center: XY): NoteNode {
 	};
 }
 
-export function makeTodoNode(center: XY): TodoNode {
-	const w = 260;
-	const h = 200;
+function makeTodoNode(center: XY): TodoNode {
+	const { w, h } = NODE_TYPE_META.todo.size;
 	return {
 		id: crypto.randomUUID(),
 		type: "todo",
@@ -48,9 +48,8 @@ export function makeTodoNode(center: XY): TodoNode {
 	};
 }
 
-export function makeTextNode(center: XY): TextNode {
-	const w = 200;
-	const h = 40;
+function makeTextNode(center: XY): TextNode {
+	const { w, h } = NODE_TYPE_META.text.size;
 	return {
 		id: crypto.randomUUID(),
 		type: "text",
@@ -61,9 +60,8 @@ export function makeTextNode(center: XY): TextNode {
 	};
 }
 
-export function makeFrameNode(center: XY): FrameNode {
-	const w = 400;
-	const h = 300;
+function makeFrameNode(center: XY): FrameNode {
+	const { w, h } = NODE_TYPE_META.frame.size;
 	return {
 		id: crypto.randomUUID(),
 		type: "frame",
@@ -96,8 +94,7 @@ export function makeMapNode(
 	center: XY,
 	meta: { url: string; mapSrc: string; title: string; address: string },
 ): MapNode {
-	const w = 320;
-	const h = 300;
+	const { w, h } = NODE_TYPE_META.map.size;
 	return {
 		id: crypto.randomUUID(),
 		type: "map",
@@ -123,8 +120,7 @@ export function makeBookmarkNode(
 		favicon: string;
 	},
 ): BookmarkNode {
-	const w = 280;
-	const h = 220;
+	const { w, h } = NODE_TYPE_META.bookmark.size;
 	return {
 		id: crypto.randomUUID(),
 		type: "bookmark",
@@ -209,8 +205,7 @@ export function makeModelNode(
 	uploaded: { src: string; mimeType: string },
 	format: ModelFormat,
 ): ModelNode {
-	const w = 360;
-	const h = 300;
+	const { w, h } = NODE_TYPE_META.model.size;
 	const offset = offsetIndex * 16;
 	return {
 		id: crypto.randomUUID(),
@@ -234,8 +229,7 @@ export function makePdfNode(
 	file: { name: string; size?: number },
 	uploaded: { src: string },
 ): PdfNode {
-	const w = 360;
-	const h = 460;
+	const { w, h } = NODE_TYPE_META.pdf.size;
 	const offset = offsetIndex * 16;
 	return {
 		id: crypto.randomUUID(),
@@ -253,8 +247,7 @@ export function makePdfNode(
 }
 
 export function makePdfNodeFromUrl(center: XY, url: string): PdfNode {
-	const w = 360;
-	const h = 460;
+	const { w, h } = NODE_TYPE_META.pdf.size;
 	const name = (() => {
 		try {
 			return decodeURIComponent(new URL(url).pathname.split("/").pop() ?? url);
@@ -279,8 +272,7 @@ export function makeFileNode(
 	file: { name: string; size: number },
 	uploaded: { src: string; mimeType: string },
 ): FileNode {
-	const w = 240;
-	const h = 96;
+	const { w, h } = NODE_TYPE_META.file.size;
 	const offset = offsetIndex * 16;
 	return {
 		id: crypto.randomUUID(),
@@ -295,4 +287,21 @@ export function makeFileNode(
 			size: file.size,
 		},
 	};
+}
+
+/**
+ * Builds a node of one of the directly-creatable types. Keeps callers from
+ * having to fan out to a specific factory per type.
+ */
+export function makeCreatableNode(type: CreatableNodeType, center: XY) {
+	switch (type) {
+		case "note":
+			return makeNoteNode(center);
+		case "todo":
+			return makeTodoNode(center);
+		case "text":
+			return makeTextNode(center);
+		case "frame":
+			return makeFrameNode(center);
+	}
 }

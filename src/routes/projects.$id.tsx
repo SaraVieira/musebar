@@ -10,7 +10,6 @@ import {
 	Controls,
 	MiniMap,
 	type Node,
-	type NodeTypes,
 	ReactFlow,
 	ReactFlowProvider,
 	useReactFlow,
@@ -27,17 +26,7 @@ import {
 	NodeContextMenu,
 	type NodeContextMenuState,
 } from "#/components/board/node-context-menu";
-import { BookmarkNodeView } from "#/components/board/nodes/bookmark-node";
-import { EmbedNodeView } from "#/components/board/nodes/embed-node";
-import { FileNodeView } from "#/components/board/nodes/file-node";
-import { FrameNodeView } from "#/components/board/nodes/frame-node";
-import { ImageNodeView } from "#/components/board/nodes/image-node";
-import { MapNodeView } from "#/components/board/nodes/map-node";
-import { ModelNodeView } from "#/components/board/nodes/model-node";
-import { NoteNodeView } from "#/components/board/nodes/note";
-import { PdfNodeView } from "#/components/board/nodes/pdf-node";
-import { TextNodeView } from "#/components/board/nodes/text-node";
-import { TodoNodeView } from "#/components/board/nodes/todo-node";
+import { nodeTypes } from "#/components/board/nodes/registry";
 import {
 	PaneContextMenu,
 	type PaneContextMenuState,
@@ -49,13 +38,9 @@ import { DevTools } from "#/components/devtools";
 import { Button } from "#/components/ui/button";
 import { getSession } from "#/lib/auth-server";
 import { duplicateNodes } from "#/lib/board/duplicate";
-import {
-	makeFrameNode,
-	makeNoteNode,
-	makeTextNode,
-	makeTodoNode,
-} from "#/lib/board/factories";
+import { makeCreatableNode } from "#/lib/board/factories";
 import { BoardHistoryProvider } from "#/lib/board/history-context";
+import type { CreatableNodeType } from "#/lib/board/node-types";
 import { useAddByUrl } from "#/lib/hooks/use-add-by-url";
 import { useAddFiles } from "#/lib/hooks/use-add-files";
 import { useBoard } from "#/lib/hooks/use-board";
@@ -64,20 +49,6 @@ import { useBoardPaste } from "#/lib/hooks/use-board-paste";
 import { useBoardShortcuts } from "#/lib/hooks/use-board-shortcuts";
 import { useFrameParenting } from "#/lib/hooks/use-frame-parenting";
 import { getProject } from "#/lib/projects-server";
-
-const nodeTypes: NodeTypes = {
-	note: NoteNodeView,
-	todo: TodoNodeView,
-	file: FileNodeView,
-	image: ImageNodeView,
-	bookmark: BookmarkNodeView,
-	text: TextNodeView,
-	frame: FrameNodeView,
-	embed: EmbedNodeView,
-	map: MapNodeView,
-	model: ModelNodeView,
-	pdf: PdfNodeView,
-};
 
 export const Route = createFileRoute("/projects/$id")({
 	beforeLoad: async () => {
@@ -191,50 +162,18 @@ function Board() {
 		[history, onConnect],
 	);
 
-	const addNoteAt = useCallback(
-		(at: { x: number; y: number }) => {
+	const addNodeAt = useCallback(
+		(type: CreatableNodeType, at: { x: number; y: number }) => {
 			history.commit();
-			setNodes((ns) => [...ns, makeNoteNode(at)]);
+			const node = makeCreatableNode(type, at);
+			// Frames go behind everything so they don't cover existing nodes.
+			setNodes((ns) => (type === "frame" ? [node, ...ns] : [...ns, node]));
 		},
 		[history, setNodes],
 	);
-	const addTodoAt = useCallback(
-		(at: { x: number; y: number }) => {
-			history.commit();
-			setNodes((ns) => [...ns, makeTodoNode(at)]);
-		},
-		[history, setNodes],
-	);
-	const addTextAt = useCallback(
-		(at: { x: number; y: number }) => {
-			history.commit();
-			setNodes((ns) => [...ns, makeTextNode(at)]);
-		},
-		[history, setNodes],
-	);
-	const addFrameAt = useCallback(
-		(at: { x: number; y: number }) => {
-			history.commit();
-			setNodes((ns) => [makeFrameNode(at), ...ns]);
-		},
-		[history, setNodes],
-	);
-
-	const addNote = useCallback(
-		() => addNoteAt(boardCenter()),
-		[addNoteAt, boardCenter],
-	);
-	const addTodo = useCallback(
-		() => addTodoAt(boardCenter()),
-		[addTodoAt, boardCenter],
-	);
-	const addText = useCallback(
-		() => addTextAt(boardCenter()),
-		[addTextAt, boardCenter],
-	);
-	const addFrame = useCallback(
-		() => addFrameAt(boardCenter()),
-		[addFrameAt, boardCenter],
+	const addNode = useCallback(
+		(type: CreatableNodeType) => addNodeAt(type, boardCenter()),
+		[addNodeAt, boardCenter],
 	);
 
 	const duplicate = useCallback(
@@ -261,10 +200,7 @@ function Board() {
 	);
 
 	useBoardShortcuts({
-		onAddNote: addNote,
-		onAddTodo: addTodo,
-		onAddText: addText,
-		onAddFrame: addFrame,
+		onAddNode: addNode,
 		onDuplicate: () => duplicate(),
 		onOpenShortcuts: () => setShortcutsOpen(true),
 	});
@@ -414,10 +350,7 @@ function Board() {
 				</header>
 				<div className="flex min-h-0 flex-1">
 					<BoardSidebar
-						onAddNote={addNote}
-						onAddTodo={addTodo}
-						onAddText={addText}
-						onAddFrame={addFrame}
+						onAddNode={addNode}
 						onAddUrl={() => setUrlOpen(true)}
 						onAddFiles={(files) => addFiles(files, boardCenter())}
 					/>
@@ -518,20 +451,9 @@ function Board() {
 					<PaneContextMenu
 						state={paneMenu}
 						actions={{
-							onAddNote: () =>
-								addNoteAt(
-									rf.screenToFlowPosition({ x: paneMenu.x, y: paneMenu.y }),
-								),
-							onAddTodo: () =>
-								addTodoAt(
-									rf.screenToFlowPosition({ x: paneMenu.x, y: paneMenu.y }),
-								),
-							onAddText: () =>
-								addTextAt(
-									rf.screenToFlowPosition({ x: paneMenu.x, y: paneMenu.y }),
-								),
-							onAddFrame: () =>
-								addFrameAt(
+							onAddNode: (type) =>
+								addNodeAt(
+									type,
 									rf.screenToFlowPosition({ x: paneMenu.x, y: paneMenu.y }),
 								),
 							onAddUrl: () => setUrlOpen(true),

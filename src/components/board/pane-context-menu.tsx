@@ -1,7 +1,12 @@
-import { Frame, Link2, ListChecks, StickyNote, Type } from "lucide-react";
+import { Link2 } from "lucide-react";
 import { type ReactNode, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import {
+	CREATABLE_NODES,
+	type CreatableNodeType,
+} from "#/lib/board/node-types";
 import { cn } from "#/lib/utils";
+import { CREATABLE_NODE_ICONS } from "./nodes/registry";
 
 export interface PaneContextMenuState {
 	x: number;
@@ -9,10 +14,7 @@ export interface PaneContextMenuState {
 }
 
 interface Actions {
-	onAddNote: () => void;
-	onAddTodo: () => void;
-	onAddText: () => void;
-	onAddFrame: () => void;
+	onAddNode: (type: CreatableNodeType) => void;
 	onAddUrl: () => void;
 	onClose: () => void;
 }
@@ -49,38 +51,20 @@ export function PaneContextMenu({
 			style={{ left: state.x, top: state.y }}
 			className="bg-popover text-popover-foreground fixed z-50 min-w-[180px] rounded-md border p-1 shadow-md"
 		>
-			<MenuItem
-				icon={<StickyNote className="size-4" />}
-				label="New note"
-				onClick={() => {
-					actions.onAddNote();
-					actions.onClose();
-				}}
-			/>
-			<MenuItem
-				icon={<ListChecks className="size-4" />}
-				label="New todo list"
-				onClick={() => {
-					actions.onAddTodo();
-					actions.onClose();
-				}}
-			/>
-			<MenuItem
-				icon={<Type className="size-4" />}
-				label="New text"
-				onClick={() => {
-					actions.onAddText();
-					actions.onClose();
-				}}
-			/>
-			<MenuItem
-				icon={<Frame className="size-4" />}
-				label="New frame"
-				onClick={() => {
-					actions.onAddFrame();
-					actions.onClose();
-				}}
-			/>
+			{CREATABLE_NODES.map(({ type, label }) => {
+				const Icon = CREATABLE_NODE_ICONS[type];
+				return (
+					<MenuItem
+						key={type}
+						icon={<Icon className="size-4" />}
+						label={`New ${label.toLowerCase()}`}
+						onClick={() => {
+							actions.onAddNode(type);
+							actions.onClose();
+						}}
+					/>
+				);
+			})}
 			<MenuDivider />
 			<MenuItem
 				icon={<Link2 className="size-4" />}

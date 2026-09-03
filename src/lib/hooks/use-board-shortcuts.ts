@@ -1,11 +1,12 @@
 import { useEffect } from "react";
+import {
+	CREATABLE_NODES,
+	type CreatableNodeType,
+} from "#/lib/board/node-types";
 import { isEditableTarget } from "#/lib/utils";
 
 interface Handlers {
-	onAddNote: () => void;
-	onAddTodo: () => void;
-	onAddText: () => void;
-	onAddFrame: () => void;
+	onAddNode: (type: CreatableNodeType) => void;
 	onDuplicate: () => void;
 	onOpenShortcuts: () => void;
 }
@@ -35,23 +36,12 @@ export function useBoardShortcuts(handlers: Handlers) {
 				handlers.onOpenShortcuts();
 				return;
 			}
-			switch (key.toLowerCase()) {
-				case "n":
-					e.preventDefault();
-					handlers.onAddNote();
-					break;
-				case "t":
-					e.preventDefault();
-					handlers.onAddTodo();
-					break;
-				case "x":
-					e.preventDefault();
-					handlers.onAddText();
-					break;
-				case "f":
-					e.preventDefault();
-					handlers.onAddFrame();
-					break;
+			const creatable = CREATABLE_NODES.find(
+				(n) => n.shortcut === key.toLowerCase(),
+			);
+			if (creatable) {
+				e.preventDefault();
+				handlers.onAddNode(creatable.type);
 			}
 		}
 		window.addEventListener("keydown", onKey);

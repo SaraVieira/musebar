@@ -5,6 +5,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "#/components/ui/dialog";
+import { CREATABLE_NODES } from "#/lib/board/node-types";
 
 interface Shortcut {
 	keys: string[];
@@ -14,12 +15,11 @@ interface Shortcut {
 const GROUPS: { name: string; items: Shortcut[] }[] = [
 	{
 		name: "Add",
-		items: [
-			{ keys: ["N"], label: "New note" },
-			{ keys: ["T"], label: "New todo list" },
-			{ keys: ["X"], label: "New text" },
-			{ keys: ["F"], label: "New frame" },
-		],
+		// Derived so the dialog cannot drift from the keys actually bound.
+		items: CREATABLE_NODES.map(({ label, shortcut }) => ({
+			keys: [shortcut.toUpperCase()],
+			label: `New ${label.toLowerCase()}`,
+		})),
 	},
 	{
 		name: "Edit",

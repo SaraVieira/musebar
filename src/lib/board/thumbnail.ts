@@ -1,4 +1,5 @@
 import type { Edge, Node } from "@xyflow/react";
+import { nodeDefaultSize, nodeThumbnailFill } from "#/lib/board/node-types";
 
 const THUMB_W = 480;
 const THUMB_H = 300;
@@ -6,38 +7,9 @@ const PAD = 16;
 const BG = "#0a0a0a";
 const EDGE = "#334155";
 
-const DEFAULT_SIZE: Record<string, { w: number; h: number }> = {
-	note: { w: 240, h: 160 },
-	todo: { w: 260, h: 200 },
-	text: { w: 200, h: 40 },
-	frame: { w: 400, h: 300 },
-	file: { w: 220, h: 90 },
-	image: { w: 240, h: 180 },
-	bookmark: { w: 300, h: 110 },
-	embed: { w: 480, h: 270 },
-	map: { w: 320, h: 300 },
-	model: { w: 360, h: 300 },
-	pdf: { w: 360, h: 460 },
-};
-
-const TYPE_FILL: Record<string, string> = {
-	note: "#facc15",
-	todo: "#38bdf8",
-	text: "#e2e8f0",
-	frame: "#1e293b",
-	file: "#a78bfa",
-	image: "#fb7185",
-	bookmark: "#34d399",
-	embed: "#f97316",
-	map: "#ef4444",
-	model: "#8b5cf6",
-	pdf: "#f87171",
-};
-
 function nodeSize(n: Node) {
-	const w = n.width ?? DEFAULT_SIZE[n.type ?? ""]?.w ?? 200;
-	const h = n.height ?? DEFAULT_SIZE[n.type ?? ""]?.h ?? 120;
-	return { w, h };
+	const fallback = nodeDefaultSize(n.type);
+	return { w: n.width ?? fallback.w, h: n.height ?? fallback.h };
 }
 
 function fillFor(n: Node): string {
@@ -45,7 +17,7 @@ function fillFor(n: Node): string {
 		typeof (n.data as { color?: unknown })?.color === "string"
 			? ((n.data as { color: string }).color as string)
 			: undefined;
-	return color ?? TYPE_FILL[n.type ?? ""] ?? "#64748b";
+	return color ?? nodeThumbnailFill(n.type);
 }
 
 function escapeAttr(v: string) {
