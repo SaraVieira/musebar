@@ -36,6 +36,13 @@
       "when": 1788171421654,
       "tag": "0004_cute_black_widow",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1788350874486,
+      "tag": "0005_pink_vance_astro",
+      "breakpoints": true
     }
   ]
 }

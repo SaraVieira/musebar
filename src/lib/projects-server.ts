@@ -78,28 +78,52 @@ export const updateProject = createServerFn({ method: "POST" })
 			);
 	});
 
+export type SaveContentResult =
+	| { conflict: false; version: number }
+	| { conflict: true };
+
+/**
+ * Writes board content only if the caller's `expectedVersion` still matches the
+ * row. A stale version means someone else (another tab, another device) saved
+ * in the meantime, so the write is refused rather than silently overwriting it.
+ */
 export const updateProjectContent = createServerFn({ method: "POST" })
 	.validator(
 		z.object({
 			id: z.string(),
 			content: z.string(),
 			thumbnail: z.string().nullable().optional(),
+			expectedVersion: z.number().int().nonnegative(),
 		}),
 	)
-	.handler(async ({ data }) => {
+	.handler(async ({ data }): Promise<SaveContentResult> => {
 		const session = await requireServerSession();
 		const patch: {
 			content: string;
 			updatedAt: Date;
+			version: number;
 			thumbnail?: string | null;
-		} = { content: data.content, updatedAt: new Date() };
+		} = {
+			content: data.content,
+			updatedAt: new Date(),
+			version: data.expectedVersion + 1,
+		};
 		if (data.thumbnail !== undefined) patch.thumbnail = data.thumbnail;
-		await db
+
+		const rows = await db
 			.update(Projects)
 			.set(patch)
 			.where(
-				and(eq(Projects.id, data.id), eq(Projects.userId, session.user.id)),
-			);
+				and(
+					eq(Projects.id, data.id),
+					eq(Projects.userId, session.user.id),
+					eq(Projects.version, data.expectedVersion),
+				),
+			)
+			.returning({ version: Projects.version });
+
+		if (rows.length === 0) return { conflict: true };
+		return { conflict: false, version: rows[0].version };
 	});
 
 export const deleteProject = createServerFn({ method: "POST" })

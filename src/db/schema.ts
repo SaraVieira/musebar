@@ -126,6 +126,9 @@ export const Projects = sqliteTable("projects", {
 	description: text("description"),
 	content: text("content"),
 	thumbnail: text("thumbnail"),
+	// Bumped on every content write. Clients send the version they loaded, and a
+	// write whose version no longer matches is rejected instead of clobbering.
+	version: integer("version").default(0).notNull(),
 	public: integer("public", { mode: "boolean" }).default(false).notNull(),
 	userId: text("user_id")
 		.notNull()

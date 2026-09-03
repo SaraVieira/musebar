@@ -7,17 +7,16 @@ import {
 	useEdgesState,
 	useNodesState,
 } from "@xyflow/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { BoardSettings } from "#/lib/board/settings";
 import { parseSnapshot } from "#/lib/board/snapshot";
 import { generateBoardThumbnail } from "#/lib/board/thumbnail";
+import { useAutosave } from "#/lib/hooks/use-autosave";
 import { readImageDims } from "#/lib/media-dims";
 import { type getProject, updateProjectContent } from "#/lib/projects-server";
 
 type Project = NonNullable<Awaited<ReturnType<typeof getProject>>>;
-
-const SAVE_DEBOUNCE_MS = 800;
 
 async function uploadFile(file: File, projectId: string) {
 	const form = new FormData();
@@ -39,33 +38,44 @@ export function useBoard(project: Project) {
 	const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initial.nodes);
 	const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initial.edges);
 	const [settings, setSettings] = useState<BoardSettings>(initial.settings);
-	const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-	const skipNextSave = useRef(true);
 
-	useEffect(() => {
-		if (skipNextSave.current) {
-			skipNextSave.current = false;
-			return;
-		}
-		if (saveTimer.current) clearTimeout(saveTimer.current);
-		saveTimer.current = setTimeout(() => {
+	const board = useMemo(
+		() => ({ nodes, edges, settings }),
+		[nodes, edges, settings],
+	);
+
+	const saveBoard = useCallback(
+		(data: typeof board, version: number) =>
 			updateProjectContent({
 				data: {
 					id: project.id,
-					content: JSON.stringify({ nodes, edges, settings }),
-					thumbnail: generateBoardThumbnail(nodes, edges),
+					content: JSON.stringify(data),
+					thumbnail: generateBoardThumbnail(data.nodes, data.edges),
+					expectedVersion: version,
 				},
-			}).catch((err) => {
-				toast.error("Couldn't save the board", {
-					id: "board-save-error",
-					description: err instanceof Error ? err.message : undefined,
-				});
+			}),
+		[project.id],
+	);
+
+	const { status: saveStatus } = useAutosave({
+		data: board,
+		initialVersion: project.version,
+		save: saveBoard,
+		onConflict: () => {
+			toast.error("This board changed somewhere else", {
+				id: "board-save-conflict",
+				description:
+					"Saving is paused so your changes don't overwrite it. Reload to get the latest version.",
+				duration: Number.POSITIVE_INFINITY,
 			});
-		}, SAVE_DEBOUNCE_MS);
-		return () => {
-			if (saveTimer.current) clearTimeout(saveTimer.current);
-		};
-	}, [nodes, edges, settings, project.id]);
+		},
+		onError: (err) => {
+			toast.error("Couldn't save the board", {
+				id: "board-save-error",
+				description: err instanceof Error ? err.message : undefined,
+			});
+		},
+	});
 
 	const onConnect: OnConnect = useCallback(
 		(params: Connection) => setEdges((eds) => addEdge(params, eds)),
@@ -87,6 +97,7 @@ export function useBoard(project: Project) {
 		onConnect,
 		settings,
 		updateSettings,
+		saveStatus,
 		uploadFile: (file: File) => uploadFile(file, project.id),
 		readImageDims,
 	};
