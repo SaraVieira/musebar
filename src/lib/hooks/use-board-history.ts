@@ -1,17 +1,11 @@
 import { type Edge, type Node, useReactFlow } from "@xyflow/react";
 import { useCallback, useEffect, useMemo } from "react";
+import { isEditableTarget } from "#/lib/utils";
 import { useHistory } from "./use-history";
 
 type Snapshot = { nodes: Node[]; edges: Edge[] };
 type SetNodes = (updater: Node[] | ((n: Node[]) => Node[])) => void;
 type SetEdges = (updater: Edge[] | ((e: Edge[]) => Edge[])) => void;
-
-function isEditableTarget(t: EventTarget | null) {
-	if (!(t instanceof HTMLElement)) return false;
-	if (t.isContentEditable) return true;
-	const tag = t.tagName;
-	return tag === "INPUT" || tag === "TEXTAREA";
-}
 
 export function useBoardHistory(setNodes: SetNodes, setEdges: SetEdges) {
 	const rf = useReactFlow();

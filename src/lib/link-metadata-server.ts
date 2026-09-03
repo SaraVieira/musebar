@@ -1,19 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-
-function pick(html: string, re: RegExp) {
-	return html.match(re)?.[1]?.trim();
-}
-
-function decode(s: string | undefined) {
-	if (!s) return "";
-	return s
-		.replace(/&amp;/g, "&")
-		.replace(/&quot;/g, '"')
-		.replace(/&#39;/g, "'")
-		.replace(/&lt;/g, "<")
-		.replace(/&gt;/g, ">");
-}
+import { decode, fetchHtml, pick } from "#/lib/html-meta";
 
 export const fetchLinkMetadata = createServerFn({ method: "POST" })
 	.validator(z.object({ url: z.string().url() }))
@@ -25,17 +12,8 @@ export const fetchLinkMetadata = createServerFn({ method: "POST" })
 			favicon: `${new URL(data.url).origin}/favicon.ico`,
 		};
 		try {
-			const res = await fetch(data.url, {
-				headers: {
-					"User-Agent":
-						"Mozilla/5.0 (compatible; Musebar/1.0; +https://musebar.local)",
-					Accept: "text/html,*/*;q=0.8",
-				},
-				redirect: "follow",
-				signal: AbortSignal.timeout(6000),
-			});
-			if (!res.ok) return fallback;
-			const html = await res.text();
+			const html = await fetchHtml(data.url);
+			if (html === null) return fallback;
 
 			const title =
 				pick(

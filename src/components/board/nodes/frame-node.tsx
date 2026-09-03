@@ -1,11 +1,7 @@
-import {
-	type Node,
-	type NodeProps,
-	NodeResizer,
-	useReactFlow,
-} from "@xyflow/react";
+import { type Node, type NodeProps, useReactFlow } from "@xyflow/react";
 import { useEffect, useRef, useState } from "react";
 import { useBoardCommit } from "#/lib/board/history-context";
+import { BoardResizer } from "../board-resizer";
 import { NodeHandles } from "../node-handles";
 
 interface FrameNodeData {
@@ -34,14 +30,7 @@ export function FrameNodeView({
 
 	return (
 		<div className="group relative size-full" style={{ width, height }}>
-			<NodeResizer
-				minWidth={200}
-				minHeight={120}
-				isVisible={selected}
-				onResizeStart={commit}
-				lineClassName="!border-gray-900/40"
-				handleClassName="!bg-white !border !border-gray-900/40 !size-2"
-			/>
+			<BoardResizer minWidth={200} minHeight={120} selected={selected} />
 			<div className="absolute -top-7 left-0 flex items-center gap-1">
 				{editing ? (
 					<input

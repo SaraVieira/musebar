@@ -1,13 +1,9 @@
-import {
-	type Node,
-	type NodeProps,
-	NodeResizer,
-	useReactFlow,
-} from "@xyflow/react";
+import { type Node, type NodeProps, useReactFlow } from "@xyflow/react";
 import { useCallback, useRef } from "react";
 import { useBoardCommit } from "#/lib/board/history-context";
 import { useCommitOnFirstEdit } from "#/lib/hooks/use-commit-on-first-edit";
 import { cn } from "#/lib/utils";
+import { BoardResizer } from "../board-resizer";
 import { CARD_COLORS, ColorPicker } from "../color-picker";
 import { NodeHandles } from "../node-handles";
 
@@ -97,14 +93,7 @@ export function TodoNodeView({
 
 	return (
 		<div className="group relative size-full" style={{ width, height }}>
-			<NodeResizer
-				minWidth={200}
-				minHeight={120}
-				isVisible={selected}
-				onResizeStart={commit}
-				lineClassName="!border-gray-900/40"
-				handleClassName="!bg-white !border !border-gray-900/40 !size-2"
-			/>
+			<BoardResizer minWidth={200} minHeight={120} selected={selected} />
 			{selected ? (
 				<ColorPicker
 					selected={color}

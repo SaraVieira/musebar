@@ -1,6 +1,6 @@
-import { type Node, type NodeProps, NodeResizer } from "@xyflow/react";
-import { GripHorizontal } from "lucide-react";
-import { useBoardCommit } from "#/lib/board/history-context";
+import type { Node, NodeProps } from "@xyflow/react";
+import { BoardResizer } from "../board-resizer";
+import { NodeDragHeader } from "../node-drag-header";
 import { NodeHandles } from "../node-handles";
 
 export const EMBED_DRAG_HANDLE_CLASS = "embed-drag-handle";
@@ -19,25 +19,19 @@ export function EmbedNodeView({
 	width,
 	height,
 }: NodeProps<EmbedNode>) {
-	const commit = useBoardCommit();
 	return (
 		<div className="group relative size-full" style={{ width, height }}>
-			<NodeResizer
+			<BoardResizer
 				minWidth={200}
 				minHeight={140}
-				isVisible={selected}
+				selected={selected}
 				keepAspectRatio
-				onResizeStart={commit}
-				lineClassName="!border-gray-900/40"
-				handleClassName="!bg-white !border !border-gray-900/40 !size-2"
 			/>
 			<div className="flex size-full flex-col overflow-hidden rounded-xl bg-black shadow-md">
-				<div
-					className={`${EMBED_DRAG_HANDLE_CLASS} flex h-6 shrink-0 cursor-grab items-center justify-center bg-gray-900 text-gray-500 hover:text-gray-300`}
-					title="Drag to move"
-				>
-					<GripHorizontal aria-hidden className="size-3.5" />
-				</div>
+				<NodeDragHeader
+					handleClass={EMBED_DRAG_HANDLE_CLASS}
+					className="h-6 justify-center bg-gray-900 text-gray-500 hover:text-gray-300"
+				/>
 				<iframe
 					src={data.src}
 					title={data.title ?? "Embedded content"}

@@ -1,6 +1,6 @@
 import { FileIcon } from "@react-symbols/icons/utils";
-import { type Node, type NodeProps, NodeResizer } from "@xyflow/react";
-import { useBoardCommit } from "#/lib/board/history-context";
+import type { Node, NodeProps } from "@xyflow/react";
+import { BoardResizer } from "../board-resizer";
 import { NodeHandles } from "../node-handles";
 
 interface FileNodeData {
@@ -32,17 +32,9 @@ export function FileNodeView({
 	width,
 	height,
 }: NodeProps<FileNode>) {
-	const commit = useBoardCommit();
 	return (
 		<div className="group relative size-full" style={{ width, height }}>
-			<NodeResizer
-				minWidth={200}
-				minHeight={80}
-				isVisible={selected}
-				onResizeStart={commit}
-				lineClassName="!border-gray-900/40"
-				handleClassName="!bg-white !border !border-gray-900/40 !size-2"
-			/>
+			<BoardResizer minWidth={200} minHeight={80} selected={selected} />
 			<div className="flex size-full items-center gap-3 overflow-hidden rounded-xl bg-white p-3 text-[13px] text-gray-800 shadow-md">
 				<div className="size-10 shrink-0">
 					<FileIcon fileName={data.name} autoAssign width={40} height={40} />

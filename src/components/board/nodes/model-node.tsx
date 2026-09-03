@@ -6,15 +6,15 @@ import {
 	useBounds,
 } from "@react-three/drei";
 import { Canvas, useLoader } from "@react-three/fiber";
-import { type Node, type NodeProps, NodeResizer } from "@xyflow/react";
-import { GripHorizontal } from "lucide-react";
+import type { Node, NodeProps } from "@xyflow/react";
 import { Suspense, useEffect, useState } from "react";
 import * as THREE from "three";
 import { ThreeMFLoader } from "three/examples/jsm/loaders/3MFLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
-import { useBoardCommit } from "#/lib/board/history-context";
+import { BoardResizer } from "../board-resizer";
+import { NodeDragHeader } from "../node-drag-header";
 import { NodeHandles } from "../node-handles";
 
 export const MODEL_DRAG_HANDLE_CLASS = "model-drag-handle";
@@ -121,31 +121,23 @@ export function ModelNodeView({
 	width,
 	height,
 }: NodeProps<ModelNode>) {
-	const commit = useBoardCommit();
 	// three/fiber's Canvas needs a browser env; skip during SSR / first paint.
 	const [mounted, setMounted] = useState(false);
 	useEffect(() => setMounted(true), []);
 
 	return (
 		<div className="group relative size-full" style={{ width, height }}>
-			<NodeResizer
-				minWidth={220}
-				minHeight={180}
-				isVisible={selected}
-				onResizeStart={commit}
-				lineClassName="!border-gray-900/40"
-				handleClassName="!bg-white !border !border-gray-900/40 !size-2"
-			/>
+			<BoardResizer minWidth={220} minHeight={180} selected={selected} />
 			<div className="flex size-full flex-col overflow-hidden rounded-xl bg-neutral-900 text-white shadow-md">
-				<div
-					className={`${MODEL_DRAG_HANDLE_CLASS} flex h-6 shrink-0 cursor-grab items-center justify-between gap-2 bg-neutral-950 px-2 text-gray-400 hover:text-gray-200`}
-					title="Drag to move"
+				<NodeDragHeader
+					handleClass={MODEL_DRAG_HANDLE_CLASS}
+					className="h-6 justify-between gap-2 px-2 hover:text-gray-200"
+					gripFirst={false}
 				>
 					<span className="truncate text-[10px] font-medium uppercase tracking-wide">
 						{data.format} · {data.name}
 					</span>
-					<GripHorizontal aria-hidden className="size-3.5 shrink-0" />
-				</div>
+				</NodeDragHeader>
 				<div className="relative min-h-0 flex-1">
 					{mounted ? (
 						<div className="absolute inset-0">

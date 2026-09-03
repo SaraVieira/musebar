@@ -1,5 +1,5 @@
-import { type Node, type NodeProps, NodeResizer } from "@xyflow/react";
-import { useBoardCommit } from "#/lib/board/history-context";
+import type { Node, NodeProps } from "@xyflow/react";
+import { BoardResizer } from "../board-resizer";
 import { NodeHandles } from "../node-handles";
 
 interface BookmarkNodeData {
@@ -19,18 +19,10 @@ export function BookmarkNodeView({
 	width,
 	height,
 }: NodeProps<BookmarkNode>) {
-	const commit = useBoardCommit();
 	const hostname = safeHost(data.url);
 	return (
 		<div className="group relative size-full" style={{ width, height }}>
-			<NodeResizer
-				minWidth={220}
-				minHeight={120}
-				isVisible={selected}
-				onResizeStart={commit}
-				lineClassName="!border-gray-900/40"
-				handleClassName="!bg-white !border !border-gray-900/40 !size-2"
-			/>
+			<BoardResizer minWidth={220} minHeight={120} selected={selected} />
 			<a
 				href={data.url}
 				target="_blank"

@@ -1,13 +1,9 @@
 import type { JSONContent } from "@tiptap/react";
 import { generateHTML } from "@tiptap/react";
-import {
-	type Node,
-	type NodeProps,
-	NodeResizer,
-	useReactFlow,
-} from "@xyflow/react";
+import { type Node, type NodeProps, useReactFlow } from "@xyflow/react";
 import { useMemo, useState } from "react";
 import { useBoardCommit } from "#/lib/board/history-context";
+import { BoardResizer } from "../../board-resizer";
 import { CARD_COLORS, ColorPicker } from "../../color-picker";
 import { NodeHandles } from "../../node-handles";
 import { EMPTY_NOTE_DOC, NOTE_EXTENSIONS } from "./extensions";
@@ -45,14 +41,7 @@ export function NoteNodeView({
 
 	return (
 		<div className="group relative size-full" style={{ width, height }}>
-			<NodeResizer
-				minWidth={160}
-				minHeight={100}
-				isVisible={selected}
-				onResizeStart={commit}
-				lineClassName="!border-gray-900/40"
-				handleClassName="!bg-white !border !border-gray-900/40 !size-2"
-			/>
+			<BoardResizer minWidth={160} minHeight={100} selected={selected} />
 			{selected ? (
 				<ColorPicker
 					selected={color}

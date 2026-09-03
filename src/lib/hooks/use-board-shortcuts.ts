@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { isEditableTarget } from "#/lib/utils";
 
 interface Handlers {
 	onAddNote: () => void;
@@ -7,13 +8,6 @@ interface Handlers {
 	onAddFrame: () => void;
 	onDuplicate: () => void;
 	onOpenShortcuts: () => void;
-}
-
-function isEditableTarget(t: EventTarget | null) {
-	if (!(t instanceof HTMLElement)) return false;
-	if (t.isContentEditable) return true;
-	const tag = t.tagName;
-	return tag === "INPUT" || tag === "TEXTAREA";
 }
 
 export function useBoardShortcuts(handlers: Handlers) {

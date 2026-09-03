@@ -1,19 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-
-function decode(s: string | undefined) {
-	if (!s) return "";
-	return s
-		.replace(/&amp;/g, "&")
-		.replace(/&quot;/g, '"')
-		.replace(/&#39;/g, "'")
-		.replace(/&lt;/g, "<")
-		.replace(/&gt;/g, ">");
-}
-
-function pick(html: string, re: RegExp) {
-	return html.match(re)?.[1]?.trim();
-}
+import { decode, fetchHtml, pick } from "#/lib/html-meta";
 
 function prettyPathSegment(seg: string) {
 	return decode(decodeURIComponent(seg.replace(/\+/g, " "))).trim();
@@ -60,25 +47,6 @@ function placeNameFrom(url: string): string | null {
 		if (q) return prettyPathSegment(q);
 	} catch {}
 	return null;
-}
-
-async function fetchHtml(url: string): Promise<string | null> {
-	try {
-		const res = await fetch(url, {
-			method: "GET",
-			headers: {
-				"User-Agent":
-					"Mozilla/5.0 (compatible; Musebar/1.0; +https://musebar.local)",
-				Accept: "text/html,*/*;q=0.8",
-			},
-			redirect: "follow",
-			signal: AbortSignal.timeout(6000),
-		});
-		if (!res.ok) return null;
-		return await res.text();
-	} catch {
-		return null;
-	}
 }
 
 export const fetchMapMetadata = createServerFn({ method: "POST" })

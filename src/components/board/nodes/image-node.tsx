@@ -1,5 +1,5 @@
-import { type Node, type NodeProps, NodeResizer } from "@xyflow/react";
-import { useBoardCommit } from "#/lib/board/history-context";
+import type { Node, NodeProps } from "@xyflow/react";
+import { BoardResizer } from "../board-resizer";
 import { NodeHandles } from "../node-handles";
 
 interface ImageNodeData {
@@ -17,16 +17,12 @@ export function ImageNodeView({
 	width,
 	height,
 }: NodeProps<ImageNode>) {
-	const commit = useBoardCommit();
 	return (
 		<div className="group relative size-full" style={{ width, height }}>
-			<NodeResizer
+			<BoardResizer
 				minWidth={80}
 				minHeight={60}
-				isVisible={selected}
-				onResizeStart={commit}
-				lineClassName="!border-gray-900/40"
-				handleClassName="!bg-white !border !border-gray-900/40 !size-2"
+				selected={selected}
 				keepAspectRatio
 			/>
 			<img

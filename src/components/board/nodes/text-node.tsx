@@ -1,11 +1,7 @@
-import {
-	type Node,
-	type NodeProps,
-	NodeResizer,
-	useReactFlow,
-} from "@xyflow/react";
+import { type Node, type NodeProps, useReactFlow } from "@xyflow/react";
 import { useEffect, useRef, useState } from "react";
 import { useBoardCommit } from "#/lib/board/history-context";
+import { BoardResizer } from "../board-resizer";
 import { NodeHandles } from "../node-handles";
 
 interface TextNodeData {
@@ -39,14 +35,7 @@ export function TextNodeView({
 
 	return (
 		<div className="group relative size-full" style={{ width, height }}>
-			<NodeResizer
-				minWidth={80}
-				minHeight={30}
-				isVisible={selected}
-				onResizeStart={commit}
-				lineClassName="!border-gray-900/40"
-				handleClassName="!bg-white !border !border-gray-900/40 !size-2"
-			/>
+			<BoardResizer minWidth={80} minHeight={30} selected={selected} />
 			{/* Double-click to edit. A keyboard path for this needs React Flow's
 			    node focus model, which the board does not wire up yet. */}
 			{/* biome-ignore lint/a11y/noStaticElementInteractions: keyboard path tracked as board-wide a11y work */}

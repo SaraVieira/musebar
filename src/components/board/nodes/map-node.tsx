@@ -1,6 +1,6 @@
-import { type Node, type NodeProps, NodeResizer } from "@xyflow/react";
+import type { Node, NodeProps } from "@xyflow/react";
 import { ExternalLink, MapPin } from "lucide-react";
-import { useBoardCommit } from "#/lib/board/history-context";
+import { BoardResizer } from "../board-resizer";
 import { NodeHandles } from "../node-handles";
 
 interface MapNodeData {
@@ -19,17 +19,9 @@ export function MapNodeView({
 	width,
 	height,
 }: NodeProps<MapNode>) {
-	const commit = useBoardCommit();
 	return (
 		<div className="group relative size-full" style={{ width, height }}>
-			<NodeResizer
-				minWidth={260}
-				minHeight={220}
-				isVisible={selected}
-				onResizeStart={commit}
-				lineClassName="!border-gray-900/40"
-				handleClassName="!bg-white !border !border-gray-900/40 !size-2"
-			/>
+			<BoardResizer minWidth={260} minHeight={220} selected={selected} />
 			<div className="flex size-full flex-col overflow-hidden rounded-xl bg-white text-gray-800 shadow-md">
 				<div className="min-h-0 flex-1 bg-gray-100">
 					<iframe

@@ -1,6 +1,7 @@
-import { type Node, type NodeProps, NodeResizer } from "@xyflow/react";
-import { Download, ExternalLink, GripHorizontal } from "lucide-react";
-import { useBoardCommit } from "#/lib/board/history-context";
+import type { Node, NodeProps } from "@xyflow/react";
+import { Download, ExternalLink } from "lucide-react";
+import { BoardResizer } from "../board-resizer";
+import { NodeDragHeader } from "../node-drag-header";
 import { NodeHandles } from "../node-handles";
 
 export const PDF_DRAG_HANDLE_CLASS = "pdf-drag-handle";
@@ -32,7 +33,6 @@ export function PdfNodeView({
 	width,
 	height,
 }: NodeProps<PdfNode>) {
-	const commit = useBoardCommit();
 	// #toolbar=0 hides the pdf.js browser toolbar for a cleaner in-card view;
 	// users can still zoom/scroll and use the header buttons to open/download.
 	const iframeSrc = `${data.src}#toolbar=0&navpanes=0`;
@@ -40,20 +40,12 @@ export function PdfNodeView({
 
 	return (
 		<div className="group relative size-full" style={{ width, height }}>
-			<NodeResizer
-				minWidth={260}
-				minHeight={240}
-				isVisible={selected}
-				onResizeStart={commit}
-				lineClassName="!border-gray-900/40"
-				handleClassName="!bg-white !border !border-gray-900/40 !size-2"
-			/>
+			<BoardResizer minWidth={260} minHeight={240} selected={selected} />
 			<div className="flex size-full flex-col overflow-hidden rounded-xl bg-neutral-900 text-white shadow-md">
-				<div
-					className={`${PDF_DRAG_HANDLE_CLASS} flex h-8 shrink-0 cursor-grab items-center gap-2 bg-neutral-950 px-2 text-gray-400`}
-					title="Drag to move"
+				<NodeDragHeader
+					handleClass={PDF_DRAG_HANDLE_CLASS}
+					className="h-8 gap-2 px-2"
 				>
-					<GripHorizontal aria-hidden className="size-3.5 shrink-0" />
 					<span className="min-w-0 flex-1 truncate text-xs font-medium">
 						{data.name}
 					</span>
@@ -81,7 +73,7 @@ export function PdfNodeView({
 					>
 						<Download aria-hidden className="size-3.5" />
 					</a>
-				</div>
+				</NodeDragHeader>
 				<div className="relative min-h-0 flex-1 bg-neutral-800">
 					<iframe
 						src={iframeSrc}

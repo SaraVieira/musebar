@@ -1,13 +1,7 @@
 import { useEffect } from "react";
+import { isEditableTarget } from "#/lib/utils";
 
 type XY = { x: number; y: number };
-
-function isEditableTarget(t: EventTarget | null) {
-	if (!(t instanceof HTMLElement)) return false;
-	if (t.isContentEditable) return true;
-	const tag = t.tagName;
-	return tag === "INPUT" || tag === "TEXTAREA";
-}
 
 export function useBoardPaste({
 	getCenter,
