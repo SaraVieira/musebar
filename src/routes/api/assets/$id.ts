@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { and, eq } from "drizzle-orm";
 import { db } from "#/db";
 import { Assets } from "#/db/schema";
-import { auth } from "#/lib/auth";
+import { getRequestSession } from "#/lib/session.server";
 
 function safeFilename(name: string) {
 	const ascii = name.replace(/[^\x20-\x7E]/g, "_").replace(/["\\]/g, "_");
@@ -26,7 +26,7 @@ async function handler({
 	request: Request;
 	params: { id: string };
 }) {
-	const session = await auth.api.getSession({ headers: request.headers });
+	const session = await getRequestSession(request);
 	if (!session) return new Response("Unauthorized", { status: 401 });
 
 	const [asset] = await db

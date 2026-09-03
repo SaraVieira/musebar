@@ -1,7 +1,7 @@
 import type { Node } from "@xyflow/react";
 import { useCallback } from "react";
 import { toast } from "sonner";
-import { detectEmbed } from "#/components/board/nodes/embed-node";
+import { detectEmbed, detectUrlKind } from "#/lib/board/detect";
 import {
 	makeBookmarkNode,
 	makeEmbedNode,
@@ -16,82 +16,57 @@ import { readImageDimsFromUrl } from "#/lib/media-dims";
 type SetNodes = (updater: (nodes: Node[]) => Node[]) => void;
 type XY = { x: number; y: number };
 
-const IMAGE_EXT_RE = /\.(png|jpe?g|gif|webp|svg|avif|bmp|ico)(?:$|[?#])/i;
-const PDF_EXT_RE = /\.pdf(?:$|[?#])/i;
 const DEFAULT_IMAGE_DIMS = { w: 480, h: 320 };
-
-export function isImageUrl(url: string): boolean {
-	try {
-		return IMAGE_EXT_RE.test(new URL(url).pathname);
-	} catch {
-		return false;
-	}
-}
-
-export function isPdfUrl(url: string): boolean {
-	try {
-		return PDF_EXT_RE.test(new URL(url).pathname);
-	} catch {
-		return false;
-	}
-}
-
-export function isGoogleMapsUrl(url: string): boolean {
-	try {
-		const u = new URL(url);
-		const host = u.hostname.toLowerCase();
-		if (host === "maps.google.com") return true;
-		if (host === "maps.app.goo.gl") return true;
-		if (host === "goo.gl" && u.pathname.startsWith("/maps")) return true;
-		if (
-			(host === "www.google.com" || host === "google.com") &&
-			u.pathname.startsWith("/maps")
-		)
-			return true;
-		return false;
-	} catch {
-		return false;
-	}
-}
 
 export function useAddByUrl(setNodes: SetNodes) {
 	return useCallback(
 		async (url: string, at: XY) => {
-			if (isGoogleMapsUrl(url)) {
-				try {
-					const meta = await fetchMapMetadata({ data: { url } });
-					setNodes((ns) => [...ns, makeMapNode(at, meta)]);
+			const append = (node: Node) => setNodes((ns) => [...ns, node]);
+
+			switch (detectUrlKind(url)) {
+				case "map":
+					try {
+						append(makeMapNode(at, await fetchMapMetadata({ data: { url } })));
+					} catch (err) {
+						toast.error("Couldn't add map", {
+							description: err instanceof Error ? err.message : undefined,
+						});
+					}
 					return;
-				} catch (err) {
-					toast.error("Couldn't add map", {
-						description: err instanceof Error ? err.message : undefined,
-					});
+
+				case "image": {
+					const dims = await readImageDimsFromUrl(url).catch(
+						() => DEFAULT_IMAGE_DIMS,
+					);
+					append(makeImageNodeFromUrl(at, url, dims));
 					return;
 				}
-			}
-			if (isImageUrl(url)) {
-				const dims = await readImageDimsFromUrl(url).catch(
-					() => DEFAULT_IMAGE_DIMS,
-				);
-				setNodes((ns) => [...ns, makeImageNodeFromUrl(at, url, dims)]);
-				return;
-			}
-			if (isPdfUrl(url)) {
-				setNodes((ns) => [...ns, makePdfNodeFromUrl(at, url)]);
-				return;
-			}
-			const embed = detectEmbed(url);
-			if (embed) {
-				setNodes((ns) => [...ns, makeEmbedNode(url, at, embed)]);
-				return;
-			}
-			try {
-				const meta = await fetchLinkMetadata({ data: { url } });
-				setNodes((ns) => [...ns, makeBookmarkNode(url, at, meta)]);
-			} catch (err) {
-				toast.error("Couldn't add link", {
-					description: err instanceof Error ? err.message : undefined,
-				});
+
+				case "pdf":
+					append(makePdfNodeFromUrl(at, url));
+					return;
+
+				case "embed": {
+					const embed = detectEmbed(url);
+					if (embed) append(makeEmbedNode(url, at, embed));
+					return;
+				}
+
+				case "bookmark":
+					try {
+						append(
+							makeBookmarkNode(
+								url,
+								at,
+								await fetchLinkMetadata({ data: { url } }),
+							),
+						);
+					} catch (err) {
+						toast.error("Couldn't add link", {
+							description: err instanceof Error ? err.message : undefined,
+						});
+					}
+					return;
 			}
 		},
 		[setNodes],

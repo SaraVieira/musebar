@@ -2,11 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { and, eq } from "drizzle-orm";
 import { db } from "#/db";
 import { Assets, Projects } from "#/db/schema";
-import { auth } from "#/lib/auth";
 import { MAX_FILE_SIZE } from "#/lib/constants";
+import { getRequestSession } from "#/lib/session.server";
 
 async function handler({ request }: { request: Request }) {
-	const session = await auth.api.getSession({ headers: request.headers });
+	const session = await getRequestSession(request);
 	if (!session) return new Response("Unauthorized", { status: 401 });
 
 	const form = await request.formData();

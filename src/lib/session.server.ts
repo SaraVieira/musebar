@@ -12,3 +12,11 @@ export async function requireServerSession() {
 	if (!session) throw new Error("UNAUTHORIZED");
 	return session;
 }
+
+/**
+ * Session for an HTTP route handler, which receives the Request explicitly
+ * rather than through the server-function async context.
+ */
+export async function getRequestSession(request: Request) {
+	return auth.api.getSession({ headers: request.headers });
+}

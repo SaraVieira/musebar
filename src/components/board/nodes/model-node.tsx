@@ -19,17 +19,9 @@ import { NodeHandles } from "../node-handles";
 
 export const MODEL_DRAG_HANDLE_CLASS = "model-drag-handle";
 
-export type ModelFormat = "gltf" | "glb" | "stl" | "obj" | "3mf";
+import type { ModelFormat } from "#/lib/board/detect";
 
-const MODEL_EXTS = ["gltf", "glb", "stl", "obj", "3mf"] as const;
-
-export function detectModelFormat(name: string): ModelFormat | null {
-	const ext = name.split(".").pop()?.toLowerCase();
-	if (!ext) return null;
-	return (MODEL_EXTS as readonly string[]).includes(ext)
-		? (ext as ModelFormat)
-		: null;
-}
+export type { ModelFormat };
 
 interface ModelNodeData {
 	src: string;

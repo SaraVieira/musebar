@@ -1,7 +1,7 @@
 import type { Node } from "@xyflow/react";
 import { useCallback } from "react";
 import { toast } from "sonner";
-import { detectModelFormat } from "#/components/board/nodes/model-node";
+import { detectFileKind, detectModelFormat } from "#/lib/board/detect";
 import {
 	makeFileNode,
 	makeImageNode,
@@ -20,30 +20,34 @@ type XY = { x: number; y: number };
 
 const DEFAULT_IMAGE_DIMS = { w: 240, h: 180 };
 
-function isPdf(file: File, mimeType: string) {
-	return mimeType === "application/pdf" || /\.pdf$/i.test(file.name);
-}
-
 export function useAddFiles(setNodes: SetNodes, uploadFile: UploadFile) {
 	return useCallback(
 		async (files: File[], at: XY) => {
 			const toAdd: Node[] = [];
-			for (let i = 0; i < files.length; i++) {
-				const file = files[i];
+			for (const [index, file] of files.entries()) {
 				try {
 					const uploaded = await uploadFile(file);
-					const modelFormat = detectModelFormat(file.name);
-					if (modelFormat) {
-						toAdd.push(makeModelNode(at, i, file, uploaded, modelFormat));
-					} else if (isPdf(file, uploaded.mimeType)) {
-						toAdd.push(makePdfNode(at, i, file, uploaded));
-					} else if (uploaded.mimeType.startsWith("image/")) {
-						const dims = await readImageDims(file).catch(
-							() => DEFAULT_IMAGE_DIMS,
-						);
-						toAdd.push(makeImageNode(at, i, file, uploaded, dims));
-					} else {
-						toAdd.push(makeFileNode(at, i, file, uploaded));
+					switch (detectFileKind(file.name, uploaded.mimeType)) {
+						case "model": {
+							const format = detectModelFormat(file.name);
+							if (format) {
+								toAdd.push(makeModelNode(at, index, file, uploaded, format));
+							}
+							break;
+						}
+						case "pdf":
+							toAdd.push(makePdfNode(at, index, file, uploaded));
+							break;
+						case "image": {
+							const dims = await readImageDims(file).catch(
+								() => DEFAULT_IMAGE_DIMS,
+							);
+							toAdd.push(makeImageNode(at, index, file, uploaded, dims));
+							break;
+						}
+						case "file":
+							toAdd.push(makeFileNode(at, index, file, uploaded));
+							break;
 					}
 				} catch (err) {
 					toast.error(`Couldn't upload ${file.name}`, {

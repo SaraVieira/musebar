@@ -44,38 +44,3 @@ export function EmbedNodeView({
 		</div>
 	);
 }
-
-export function detectEmbed(
-	url: string,
-): { src: string; w: number; h: number } | null {
-	const yt = url.match(
-		/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/,
-	);
-	if (yt) {
-		return {
-			src: `https://www.youtube.com/embed/${yt[1]}`,
-			w: 480,
-			h: 270,
-		};
-	}
-
-	const vimeo = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
-	if (vimeo) {
-		return {
-			src: `https://player.vimeo.com/video/${vimeo[1]}`,
-			w: 480,
-			h: 270,
-		};
-	}
-
-	const loom = url.match(/loom\.com\/share\/([\w-]+)/);
-	if (loom) {
-		return {
-			src: `https://www.loom.com/embed/${loom[1]}`,
-			w: 480,
-			h: 270,
-		};
-	}
-
-	return null;
-}
