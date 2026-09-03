@@ -36,5 +36,8 @@ jobs:
       - name: Test
         run: pnpm test
 
+      - name: Check for unused files, exports and dependencies
+        run: pnpm knip
+
       - name: Build
         run: pnpm build

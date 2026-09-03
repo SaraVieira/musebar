@@ -24,7 +24,7 @@ interface Options<T> {
 	delayMs?: number;
 }
 
-export const DEFAULT_SAVE_DELAY_MS = 800;
+const DEFAULT_SAVE_DELAY_MS = 800;
 
 /**
  * Debounced autosave with three guarantees the naive version lacked:

@@ -1,6 +1,6 @@
 {
-  "$schema": "https://unpkg.com/knip@6/schema.json",
-  "tags": ["-lintignore"],
-  "ignore": ["src/components/ui/**"],
-  "ignoreDependencies": ["shadcn"]
+	"$schema": "https://unpkg.com/knip@6/schema.json",
+	"tags": ["-lintignore"],
+	"ignore": ["src/components/ui/**"],
+	"ignoreDependencies": ["shadcn"]
 }

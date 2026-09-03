@@ -20,9 +20,7 @@ export const Route = createFileRoute("/dashboard")({
 	component: Dashboard,
 });
 
-export type ProjectRow = ReturnType<
-	typeof Route.useLoaderData
->["projects"][number];
+type ProjectRow = ReturnType<typeof Route.useLoaderData>["projects"][number];
 
 function Dashboard() {
 	const { session } = Route.useRouteContext();
