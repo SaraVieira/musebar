@@ -30,7 +30,11 @@ export function ImageNodeView({
 				alt={data.name}
 				draggable={false}
 				onPointerDown={(e) => e.stopPropagation()}
-				className="size-full rounded-lg object-cover shadow-md"
+				// object-contain, not cover: a moodboard should never hide part of an
+				// image. Nodes are created at the image's own aspect ratio, so this only
+				// shows when that ratio is off — a dimension probe that failed, or a
+				// node saved before the ratio was tracked.
+				className="size-full rounded-lg object-contain shadow-md"
 			/>
 			<NodeHandles />
 		</div>

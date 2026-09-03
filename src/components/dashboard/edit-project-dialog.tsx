@@ -19,6 +19,8 @@ interface Project {
 	description: string | null;
 }
 
+export type ProjectEdits = Pick<Project, "name" | "description">;
+
 export function EditProjectDialog({
 	project,
 	open,
@@ -28,7 +30,8 @@ export function EditProjectDialog({
 	project: Project | null;
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
-	onSaved: () => void | Promise<void>;
+	/** Receives the saved values so callers can update in place. */
+	onSaved: (edits: ProjectEdits) => void | Promise<void>;
 }) {
 	const [name, setName] = useState("");
 	const [description, setDescription] = useState("");
@@ -55,14 +58,12 @@ export function EditProjectDialog({
 		if (!canSubmit || !project) return;
 		setBusy(true);
 		try {
-			await updateProject({
-				data: {
-					id: project.id,
-					name: trimmedName,
-					description: trimmedDescription || null,
-				},
-			});
-			await onSaved();
+			const edits: ProjectEdits = {
+				name: trimmedName,
+				description: trimmedDescription || null,
+			};
+			await updateProject({ data: { id: project.id, ...edits } });
+			await onSaved(edits);
 			onOpenChange(false);
 		} catch (err) {
 			toast.error("Couldn't save changes", {

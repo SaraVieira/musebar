@@ -33,7 +33,10 @@ import {
 } from "#/components/board/pane-context-menu";
 import { ShortcutsDialog } from "#/components/board/shortcuts-dialog";
 import { UrlDialog } from "#/components/board/url-dialog";
-import { EditProjectDialog } from "#/components/dashboard/edit-project-dialog";
+import {
+	EditProjectDialog,
+	type ProjectEdits,
+} from "#/components/dashboard/edit-project-dialog";
 import { DevTools } from "#/components/devtools";
 import { Button } from "#/components/ui/button";
 import { getSession } from "#/lib/auth-server";
@@ -95,6 +98,13 @@ function Board() {
 	const [paneMenu, setPaneMenu] = useState<PaneContextMenuState | null>(null);
 	const [shortcutsOpen, setShortcutsOpen] = useState(false);
 	const [editOpen, setEditOpen] = useState(false);
+	// Renaming only changes the header. Invalidating the route instead would
+	// re-run the loader and refetch this board's entire content JSON to update
+	// one string, so the metadata is kept here and updated in place.
+	const [meta, setMeta] = useState<ProjectEdits>({
+		name: project.name,
+		description: project.description ?? null,
+	});
 	const preDragSnapshot = useRef<{
 		nodes: Node[];
 		edges: Edge[];
@@ -360,7 +370,7 @@ function Board() {
 						className="hover:bg-accent min-w-0 flex-1 truncate rounded px-2 py-1 text-left text-sm font-medium"
 						title="Rename project"
 					>
-						{project.name}
+						{meta.name}
 					</button>
 					<Button
 						variant="ghost"
@@ -391,7 +401,7 @@ function Board() {
 					>
 						<Keyboard aria-hidden />
 					</Button>
-					<ExportMenu projectName={project.name} />
+					<ExportMenu projectName={meta.name} />
 					<BoardSettingsButton settings={settings} onChange={updateSettings} />
 				</header>
 				<div className="flex min-h-0 flex-1">
@@ -486,14 +496,10 @@ function Board() {
 				) : null}
 				<ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
 				<EditProjectDialog
-					project={{
-						id: project.id,
-						name: project.name,
-						description: project.description ?? null,
-					}}
+					project={{ id: project.id, ...meta }}
 					open={editOpen}
 					onOpenChange={setEditOpen}
-					onSaved={() => router.invalidate()}
+					onSaved={setMeta}
 				/>
 				{paneMenu ? (
 					<PaneContextMenu
