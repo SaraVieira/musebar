@@ -1,6 +1,7 @@
 import type { Node, NodeProps } from "@xyflow/react";
 import { BoardResizer } from "../board-resizer";
 import { NodeHandles } from "../node-handles";
+import { Skeleton } from "../node-progress";
 
 interface BookmarkNodeData {
 	url: string;
@@ -8,6 +9,8 @@ interface BookmarkNodeData {
 	description: string;
 	image: string;
 	favicon: string;
+	pending?: boolean;
+	failed?: boolean;
 	[key: string]: unknown;
 }
 
@@ -30,7 +33,9 @@ export function BookmarkNodeView({
 				onPointerDown={(e) => e.stopPropagation()}
 				className="flex size-full flex-col overflow-hidden rounded-xl bg-white text-gray-800 no-underline shadow-md"
 			>
-				{data.image ? (
+				{data.pending ? (
+					<Skeleton className="h-1/2 w-full rounded-none" />
+				) : data.image ? (
 					// object-contain so a preview is never silently cropped, matching
 					// image nodes. og:images are typically 1.91:1 while this strip is
 					// wider, so the tinted band is what the letterboxing lands on.
@@ -47,10 +52,17 @@ export function BookmarkNodeView({
 					<div className="line-clamp-2 text-sm font-semibold">
 						{data.title || hostname}
 					</div>
-					{data.description ? (
+					{data.pending ? (
+						<div className="mt-1 flex flex-col gap-1.5">
+							<Skeleton className="h-2.5 w-full" />
+							<Skeleton className="h-2.5 w-4/5" />
+						</div>
+					) : data.description ? (
 						<div className="text-muted-foreground line-clamp-2 text-xs">
 							{data.description}
 						</div>
+					) : data.failed ? (
+						<div className="text-xs text-gray-400">Preview unavailable</div>
 					) : null}
 					<div className="mt-auto flex items-center gap-1.5 text-xs text-gray-500">
 						{data.favicon ? (

@@ -48,6 +48,37 @@ describe("parseSnapshot", () => {
 		expect(parseSnapshot(raw).settings).toEqual(DEFAULT_BOARD_SETTINGS);
 	});
 
+	it("drops nodes that were still uploading when the board was saved", () => {
+		const raw = JSON.stringify({
+			nodes: [
+				{
+					id: "done",
+					type: "image",
+					position: { x: 0, y: 0 },
+					data: { src: "/api/assets/1", uploading: false },
+				},
+				{
+					id: "midflight",
+					type: "image",
+					position: { x: 0, y: 0 },
+					data: { src: "", uploading: true, progress: 0.4 },
+				},
+			],
+			edges: [],
+		});
+		const result = parseSnapshot(raw);
+		expect(result.nodes).toHaveLength(1);
+		expect(result.nodes[0].id).toBe("done");
+	});
+
+	it("keeps nodes with no upload flag at all", () => {
+		const raw = JSON.stringify({
+			nodes: [{ id: "n", type: "note", position: { x: 0, y: 0 }, data: {} }],
+			edges: [],
+		});
+		expect(parseSnapshot(raw).nodes).toHaveLength(1);
+	});
+
 	it("backfills the drag handle on legacy embed nodes", () => {
 		const raw = JSON.stringify({
 			nodes: [{ id: "e", type: "embed", position: { x: 0, y: 0 }, data: {} }],

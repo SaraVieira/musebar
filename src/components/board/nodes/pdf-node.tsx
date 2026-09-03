@@ -3,10 +3,13 @@ import { Download, ExternalLink } from "lucide-react";
 import { BoardResizer } from "../board-resizer";
 import { NodeDragHeader } from "../node-drag-header";
 import { NodeHandles } from "../node-handles";
+import { NodeUploadOverlay } from "../node-progress";
 
 export const PDF_DRAG_HANDLE_CLASS = "pdf-drag-handle";
 
 interface PdfNodeData {
+	uploading?: boolean;
+	progress?: number;
 	src: string;
 	name: string;
 	size?: number;
@@ -82,6 +85,9 @@ export function PdfNodeView({
 					/>
 				</div>
 			</div>
+			{data.uploading ? (
+				<NodeUploadOverlay name={data.name} progress={data.progress} />
+			) : null}
 			<NodeHandles />
 		</div>
 	);

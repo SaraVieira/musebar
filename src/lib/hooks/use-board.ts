@@ -18,21 +18,45 @@ import { type getProject, updateProjectContent } from "#/lib/projects-server";
 
 type Project = NonNullable<Awaited<ReturnType<typeof getProject>>>;
 
-async function uploadFile(file: File, projectId: string) {
+export interface UploadedAsset {
+	id: string;
+	src: string;
+	mimeType: string;
+}
+
+function uploadFile(
+	file: File,
+	projectId: string,
+	onProgress?: (fraction: number) => void,
+): Promise<UploadedAsset> {
 	const form = new FormData();
 	form.set("file", file);
 	form.set("projectId", projectId);
-	const res = await fetch("/api/uploads", { method: "POST", body: form });
-	if (!res.ok) {
-		throw new Error(`Upload failed: ${res.status} ${await res.text()}`);
-	}
-	return (await res.json()) as { id: string; src: string; mimeType: string };
+
+	return new Promise((resolve, reject) => {
+		const xhr = new XMLHttpRequest();
+		xhr.open("POST", "/api/uploads");
+		xhr.upload.onprogress = (e) => {
+			if (e.lengthComputable) onProgress?.(e.loaded / e.total);
+		};
+		xhr.onload = () => {
+			if (xhr.status < 200 || xhr.status >= 300) {
+				reject(new Error(`Upload failed: ${xhr.status} ${xhr.responseText}`));
+				return;
+			}
+			try {
+				resolve(JSON.parse(xhr.responseText) as UploadedAsset);
+			} catch {
+				reject(new Error("Upload returned a malformed response"));
+			}
+		};
+		xhr.onerror = () => reject(new Error("Upload failed: network error"));
+		xhr.onabort = () => reject(new Error("Upload cancelled"));
+		xhr.send(form);
+	});
 }
 
 export function useBoard(project: Project) {
-	// Parsed once, at mount. A later router.invalidate() returning fresh content
-	// must not reset the board mid-edit; switching projects remounts this whole
-	// tree via the route's remountDeps, which is what re-runs this.
 	const [initial] = useState(() => parseSnapshot(project.content));
 	const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initial.nodes);
 	const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initial.edges);
@@ -102,7 +126,8 @@ export function useBoard(project: Project) {
 		settings,
 		updateSettings,
 		saveStatus,
-		uploadFile: (file: File) => uploadFile(file, project.id),
+		uploadFile: (file: File, onProgress?: (fraction: number) => void) =>
+			uploadFile(file, project.id, onProgress),
 		readImageDims,
 	};
 }

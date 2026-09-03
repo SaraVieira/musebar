@@ -18,10 +18,23 @@ type XY = { x: number; y: number };
 
 const DEFAULT_IMAGE_DIMS = { w: 480, h: 320 };
 
+const EMPTY_LINK_META = {
+	title: "",
+	description: "",
+	image: "",
+	favicon: "",
+};
+
 export function useAddByUrl(setNodes: SetNodes) {
 	return useCallback(
 		async (url: string, at: XY) => {
 			const append = (node: Node) => setNodes((ns) => [...ns, node]);
+			const patch = (id: string, data: Record<string, unknown>) =>
+				setNodes((ns) =>
+					ns.map((n) =>
+						n.id === id ? { ...n, data: { ...n.data, ...data } } : n,
+					),
+				);
 
 			switch (detectUrlKind(url)) {
 				case "map":
@@ -52,21 +65,23 @@ export function useAddByUrl(setNodes: SetNodes) {
 					return;
 				}
 
-				case "bookmark":
+				case "bookmark": {
+					// Placed immediately as a skeleton: fetchLinkMetadata can take up to
+					// its 6s timeout, and a blank canvas for six seconds reads as a
+					// dropped paste.
+					const node = makeBookmarkNode(url, at, EMPTY_LINK_META);
+					append({ ...node, data: { ...node.data, pending: true } });
 					try {
-						append(
-							makeBookmarkNode(
-								url,
-								at,
-								await fetchLinkMetadata({ data: { url } }),
-							),
-						);
+						const meta = await fetchLinkMetadata({ data: { url } });
+						patch(node.id, { ...meta, pending: false });
 					} catch (err) {
-						toast.error("Couldn't add link", {
+						patch(node.id, { pending: false, failed: true });
+						toast.error("Couldn't load link preview", {
 							description: err instanceof Error ? err.message : undefined,
 						});
 					}
 					return;
+				}
 			}
 		},
 		[setNodes],

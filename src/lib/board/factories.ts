@@ -1,3 +1,4 @@
+import type { Node } from "@xyflow/react";
 import type { BookmarkNode } from "#/components/board/nodes/bookmark-node";
 import {
 	EMBED_DRAG_HANDLE_CLASS,
@@ -20,6 +21,7 @@ import {
 import type { TextNode } from "#/components/board/nodes/text-node";
 import type { TodoNode } from "#/components/board/nodes/todo-node";
 
+import { detectModelFormat, type FileKind } from "#/lib/board/detect";
 import { type CreatableNodeType, NODE_TYPE_META } from "#/lib/board/node-types";
 
 type XY = { x: number; y: number };
@@ -137,7 +139,7 @@ export function makeBookmarkNode(
 	};
 }
 
-export function makeImageNode(
+function makeImageNode(
 	center: XY,
 	offsetIndex: number,
 	file: { name: string },
@@ -198,7 +200,7 @@ export function makeImageNodeFromUrl(
 	};
 }
 
-export function makeModelNode(
+function makeModelNode(
 	center: XY,
 	offsetIndex: number,
 	file: { name: string },
@@ -223,7 +225,7 @@ export function makeModelNode(
 	};
 }
 
-export function makePdfNode(
+function makePdfNode(
 	center: XY,
 	offsetIndex: number,
 	file: { name: string; size?: number },
@@ -266,7 +268,7 @@ export function makePdfNodeFromUrl(center: XY, url: string): PdfNode {
 	};
 }
 
-export function makeFileNode(
+function makeFileNode(
 	center: XY,
 	offsetIndex: number,
 	file: { name: string; size: number },
@@ -304,4 +306,48 @@ export function makeCreatableNode(type: CreatableNodeType, center: XY) {
 		case "frame":
 			return makeFrameNode(center);
 	}
+}
+
+/**
+ * A node placed on the board the moment a file is dropped, before the upload
+ * finishes. It carries the final type and size so nothing jumps when the real
+ * `src` lands — only `uploading`/`progress` are cleared.
+ */
+
+/**
+ * A node placed on the board the moment a file is dropped, before the upload
+ * finishes. It carries the final type and size so nothing jumps when the real
+ * `src` lands — only `uploading` and `progress` are cleared.
+ */
+export function makeUploadPlaceholder(
+	kind: FileKind,
+	center: XY,
+	offsetIndex: number,
+	file: File,
+	dims?: { w: number; h: number },
+): Node {
+	// A File's name and size are prototype getters, so they must be read out
+	// explicitly; spreading a File yields an empty object.
+	const meta = { name: file.name, size: file.size };
+	const uploaded = { src: "", mimeType: file.type };
+	const format = kind === "model" ? detectModelFormat(file.name) : null;
+
+	let base: Node;
+	if (kind === "image") {
+		base = makeImageNode(
+			center,
+			offsetIndex,
+			meta,
+			uploaded,
+			dims ?? NODE_TYPE_META.image.size,
+		);
+	} else if (kind === "pdf") {
+		base = makePdfNode(center, offsetIndex, meta, uploaded);
+	} else if (format) {
+		base = makeModelNode(center, offsetIndex, meta, uploaded, format);
+	} else {
+		base = makeFileNode(center, offsetIndex, meta, uploaded);
+	}
+
+	return { ...base, data: { ...base.data, uploading: true, progress: 0 } };
 }

@@ -22,11 +22,16 @@ export function parseSnapshot(raw: string | null): BoardSnapshot {
 		const parsed = JSON.parse(raw);
 		if (parsed && Array.isArray(parsed.nodes) && Array.isArray(parsed.edges)) {
 			return {
-				nodes: parsed.nodes.map((n: Node) =>
-					n.type === "embed" && !n.dragHandle
-						? { ...n, dragHandle: ".embed-drag-handle" }
-						: n,
-				),
+				// A node still marked `uploading` was saved mid-upload, so its asset
+				// never landed. Restoring it would show a permanent progress bar over
+				// a file that does not exist.
+				nodes: parsed.nodes
+					.filter((n: Node) => !(n.data as { uploading?: unknown })?.uploading)
+					.map((n: Node) =>
+						n.type === "embed" && !n.dragHandle
+							? { ...n, dragHandle: ".embed-drag-handle" }
+							: n,
+					),
 				edges: parsed.edges,
 				settings: normalizeSettings(parsed.settings),
 			};

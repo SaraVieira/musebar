@@ -16,6 +16,7 @@ import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
 import { BoardResizer } from "../board-resizer";
 import { NodeDragHeader } from "../node-drag-header";
 import { NodeHandles } from "../node-handles";
+import { NodeUploadOverlay } from "../node-progress";
 
 export const MODEL_DRAG_HANDLE_CLASS = "model-drag-handle";
 
@@ -24,6 +25,8 @@ import type { ModelFormat } from "#/lib/board/detect";
 export type { ModelFormat };
 
 interface ModelNodeData {
+	uploading?: boolean;
+	progress?: number;
 	src: string;
 	name: string;
 	mimeType: string;
@@ -169,6 +172,9 @@ export function ModelNodeView({
 					)}
 				</div>
 			</div>
+			{data.uploading ? (
+				<NodeUploadOverlay name={data.name} progress={data.progress} />
+			) : null}
 			<NodeHandles />
 		</div>
 	);

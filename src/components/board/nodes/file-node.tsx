@@ -2,8 +2,11 @@ import { FileIcon } from "@react-symbols/icons/utils";
 import type { Node, NodeProps } from "@xyflow/react";
 import { BoardResizer } from "../board-resizer";
 import { NodeHandles } from "../node-handles";
+import { NodeUploadOverlay } from "../node-progress";
 
 interface FileNodeData {
+	uploading?: boolean;
+	progress?: number;
 	src: string;
 	name: string;
 	mimeType: string;
@@ -55,6 +58,9 @@ export function FileNodeView({
 					</div>
 				</a>
 			</div>
+			{data.uploading ? (
+				<NodeUploadOverlay name={data.name} progress={data.progress} />
+			) : null}
 			<NodeHandles />
 		</div>
 	);
