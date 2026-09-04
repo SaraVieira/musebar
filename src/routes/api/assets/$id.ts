@@ -36,6 +36,7 @@ async function handler({
 			size: Assets.size,
 			checksum: Assets.checksum,
 			isPublic: Projects.public,
+			shareToken: Projects.shareToken,
 		})
 		.from(Assets)
 		.innerJoin(Projects, eq(Assets.projectId, Projects.id))
@@ -45,8 +46,11 @@ async function handler({
 	if (!row) return new Response("Not found", { status: 404 });
 
 	const session = await getRequestSession(request);
+	// A board is shared only when it has a live token, so a stale `public` flag
+	// with no token cannot leave its files readable.
+	const isShared = row.isPublic && row.shareToken !== null;
 	const isOwner = session?.user.id === row.userId;
-	if (!isOwner && !row.isPublic) {
+	if (!isOwner && !isShared) {
 		return new Response("Not found", { status: 404 });
 	}
 

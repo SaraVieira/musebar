@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { createServerFn } from "@tanstack/react-start";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
@@ -164,33 +164,64 @@ export const deleteProject = createServerFn({ method: "POST" })
 			);
 	});
 
-/** Owner-only toggle for whether a board is reachable via its share link. */
+/** 192 bits of URL-safe randomness: the share link's only secret. */
+function newShareToken() {
+	return randomBytes(24).toString("base64url");
+}
+
+/**
+ * Owner-only share toggle. Sharing mints a fresh token and unsharing clears it,
+ * so turning sharing off revokes the old link rather than parking it.
+ */
 export const setProjectVisibility = createServerFn({ method: "POST" })
 	.validator(z.object({ id: z.string(), isPublic: z.boolean() }))
 	.handler(async ({ data }) => {
 		const session = await requireServerSession();
+		const shareToken = data.isPublic ? newShareToken() : null;
 		await db
 			.update(Projects)
-			.set({ public: data.isPublic, updatedAt: new Date() })
+			.set({ public: data.isPublic, shareToken, updatedAt: new Date() })
 			.where(
 				and(eq(Projects.id, data.id), eq(Projects.userId, session.user.id)),
 			);
-		return { isPublic: data.isPublic };
+		return { isPublic: data.isPublic, shareToken };
+	});
+
+/** Invalidates the current link and issues a new one. */
+export const rotateShareToken = createServerFn({ method: "POST" })
+	.validator(z.object({ id: z.string() }))
+	.handler(async ({ data }) => {
+		const session = await requireServerSession();
+		const shareToken = newShareToken();
+		const rows = await db
+			.update(Projects)
+			.set({ shareToken, updatedAt: new Date() })
+			.where(
+				and(
+					eq(Projects.id, data.id),
+					eq(Projects.userId, session.user.id),
+					eq(Projects.public, true),
+				),
+			)
+			.returning({ shareToken: Projects.shareToken });
+		if (rows.length === 0) throw new Error("That board is not shared.");
+		return { shareToken };
 	});
 
 export const getPublicProject = createServerFn({ method: "GET" })
-	.validator(z.object({ id: z.string() }))
+	.validator(z.object({ token: z.string().min(1) }))
 	.handler(async ({ data }) => {
 		const [project] = await db
 			.select({
-				id: Projects.id,
 				name: Projects.name,
 				description: Projects.description,
 				content: Projects.content,
 				updatedAt: Projects.updatedAt,
 			})
 			.from(Projects)
-			.where(and(eq(Projects.id, data.id), eq(Projects.public, true)))
+			.where(
+				and(eq(Projects.shareToken, data.token), eq(Projects.public, true)),
+			)
 			.limit(1);
 		return project ?? null;
 	});

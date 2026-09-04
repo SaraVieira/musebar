@@ -13,9 +13,9 @@ import { nodeAriaLabel } from "#/lib/board/node-label";
 import { parseSnapshot } from "#/lib/board/snapshot";
 import { getPublicProject } from "#/lib/projects-server";
 
-export const Route = createFileRoute("/s/$id")({
+export const Route = createFileRoute("/s/$token")({
 	loader: async ({ params }) => {
-		const project = await getPublicProject({ data: { id: params.id } });
+		const project = await getPublicProject({ data: { token: params.token } });
 		if (!project) throw notFound();
 		return { project };
 	},

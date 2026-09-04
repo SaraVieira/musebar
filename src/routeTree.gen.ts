@@ -16,7 +16,7 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ApiUploadsRouteImport } from './routes/api/uploads'
 import { Route as ProjectsIdRouteImport } from './routes/projects.$id'
-import { Route as SIdRouteImport } from './routes/s.$id'
+import { Route as STokenRouteImport } from './routes/s.$token'
 import { Route as ApiAssetsIdRouteImport } from './routes/api/assets/$id'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
@@ -55,9 +55,9 @@ const ProjectsIdRoute = ProjectsIdRouteImport.update({
   path: '/projects/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SIdRoute = SIdRouteImport.update({
-  id: '/s/$id',
-  path: '/s/$id',
+const STokenRoute = STokenRouteImport.update({
+  id: '/s/$token',
+  path: '/s/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAssetsIdRoute = ApiAssetsIdRouteImport.update({
@@ -79,7 +79,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/api/uploads': typeof ApiUploadsRoute
   '/projects/$id': typeof ProjectsIdRoute
-  '/s/$id': typeof SIdRoute
+  '/s/$token': typeof STokenRoute
   '/api/assets/$id': typeof ApiAssetsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -91,7 +91,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/api/uploads': typeof ApiUploadsRoute
   '/projects/$id': typeof ProjectsIdRoute
-  '/s/$id': typeof SIdRoute
+  '/s/$token': typeof STokenRoute
   '/api/assets/$id': typeof ApiAssetsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -104,7 +104,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/api/uploads': typeof ApiUploadsRoute
   '/projects/$id': typeof ProjectsIdRoute
-  '/s/$id': typeof SIdRoute
+  '/s/$token': typeof STokenRoute
   '/api/assets/$id': typeof ApiAssetsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -118,7 +118,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/api/uploads'
     | '/projects/$id'
-    | '/s/$id'
+    | '/s/$token'
     | '/api/assets/$id'
     | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
@@ -130,7 +130,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/api/uploads'
     | '/projects/$id'
-    | '/s/$id'
+    | '/s/$token'
     | '/api/assets/$id'
     | '/api/auth/$'
   id:
@@ -142,7 +142,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/api/uploads'
     | '/projects/$id'
-    | '/s/$id'
+    | '/s/$token'
     | '/api/assets/$id'
     | '/api/auth/$'
   fileRoutesById: FileRoutesById
@@ -155,7 +155,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   ApiUploadsRoute: typeof ApiUploadsRoute
   ProjectsIdRoute: typeof ProjectsIdRoute
-  SIdRoute: typeof SIdRoute
+  STokenRoute: typeof STokenRoute
   ApiAssetsIdRoute: typeof ApiAssetsIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
@@ -211,11 +211,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/s/$id': {
-      id: '/s/$id'
-      path: '/s/$id'
-      fullPath: '/s/$id'
-      preLoaderRoute: typeof SIdRouteImport
+    '/s/$token': {
+      id: '/s/$token'
+      path: '/s/$token'
+      fullPath: '/s/$token'
+      preLoaderRoute: typeof STokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/assets/$id': {
@@ -243,7 +243,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   ApiUploadsRoute: ApiUploadsRoute,
   ProjectsIdRoute: ProjectsIdRoute,
-  SIdRoute: SIdRoute,
+  STokenRoute: STokenRoute,
   ApiAssetsIdRoute: ApiAssetsIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }

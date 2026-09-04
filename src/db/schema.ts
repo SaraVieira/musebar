@@ -120,25 +120,32 @@ export const accountRelations = relations(account, ({ one }) => ({
 	}),
 }));
 
-export const Projects = sqliteTable("projects", {
-	id: text("id").primaryKey(),
-	name: text("name").notNull(),
-	description: text("description"),
-	content: text("content"),
-	thumbnail: text("thumbnail"),
-	// Bumped on every content write; a stale version is rejected, not clobbered.
-	version: integer("version").default(0).notNull(),
-	public: integer("public", { mode: "boolean" }).default(false).notNull(),
-	userId: text("user_id")
-		.notNull()
-		.references(() => user.id, { onDelete: "cascade" }),
-	createdAt: integer("created_at", { mode: "timestamp" }).default(
-		sql`(unixepoch())`,
-	),
-	updatedAt: integer("updated_at", { mode: "timestamp" }).default(
-		sql`(unixepoch())`,
-	),
-});
+export const Projects = sqliteTable(
+	"projects",
+	{
+		id: text("id").primaryKey(),
+		name: text("name").notNull(),
+		description: text("description"),
+		content: text("content"),
+		thumbnail: text("thumbnail"),
+		// Bumped on every content write; a stale version is rejected, not clobbered.
+		version: integer("version").default(0).notNull(),
+		public: integer("public", { mode: "boolean" }).default(false).notNull(),
+		// The share link's secret. Regenerated on demand, and cleared when a board
+		// is unshared, so a leaked link can actually be revoked.
+		shareToken: text("share_token"),
+		userId: text("user_id")
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
+		createdAt: integer("created_at", { mode: "timestamp" }).default(
+			sql`(unixepoch())`,
+		),
+		updatedAt: integer("updated_at", { mode: "timestamp" }).default(
+			sql`(unixepoch())`,
+		),
+	},
+	(table) => [uniqueIndex("projects_share_token_uidx").on(table.shareToken)],
+);
 
 export const Assets = sqliteTable(
 	"assets",

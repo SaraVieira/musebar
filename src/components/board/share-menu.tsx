@@ -1,4 +1,4 @@
-import { Check, Copy, Share2 } from "lucide-react";
+import { Check, Copy, RefreshCw, Share2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "#/components/ui/button";
@@ -9,31 +9,56 @@ import {
 	PopoverTrigger,
 } from "#/components/ui/popover";
 import { Switch } from "#/components/ui/switch";
-import { setProjectVisibility } from "#/lib/projects-server";
+import { rotateShareToken, setProjectVisibility } from "#/lib/projects-server";
 
 export function ShareMenu({
 	projectId,
 	isPublic,
+	shareToken,
 	onChange,
 }: {
 	projectId: string;
 	isPublic: boolean;
-	onChange: (isPublic: boolean) => void;
+	shareToken: string | null;
+	onChange: (next: { isPublic: boolean; shareToken: string | null }) => void;
 }) {
 	const [busy, setBusy] = useState(false);
 	const [copied, setCopied] = useState(false);
+	// Built in the browser, so it uses the host the user is actually on.
 	const shareUrl =
-		typeof window === "undefined"
+		typeof window === "undefined" || !shareToken
 			? ""
-			: `${window.location.origin}/s/${projectId}`;
+			: `${window.location.origin}/s/${shareToken}`;
 
 	async function toggle(next: boolean) {
 		setBusy(true);
 		try {
-			await setProjectVisibility({ data: { id: projectId, isPublic: next } });
-			onChange(next);
+			onChange(
+				await setProjectVisibility({
+					data: { id: projectId, isPublic: next },
+				}),
+			);
 		} catch (err) {
 			toast.error("Couldn't change sharing", {
+				description: err instanceof Error ? err.message : undefined,
+			});
+		} finally {
+			setBusy(false);
+		}
+	}
+
+	async function rotate() {
+		setBusy(true);
+		try {
+			const { shareToken: next } = await rotateShareToken({
+				data: { id: projectId },
+			});
+			onChange({ isPublic: true, shareToken: next });
+			toast.success("New link created", {
+				description: "The previous link no longer works.",
+			});
+		} catch (err) {
+			toast.error("Couldn't create a new link", {
 				description: err instanceof Error ? err.message : undefined,
 			});
 		} finally {
@@ -107,6 +132,18 @@ export function ShareMenu({
 							)}
 						</Button>
 					</div>
+				) : null}
+
+				{isPublic ? (
+					<button
+						type="button"
+						onClick={rotate}
+						disabled={busy}
+						className="text-muted-foreground hover:text-foreground mt-3 flex items-center gap-1.5 text-xs disabled:opacity-50"
+					>
+						<RefreshCw aria-hidden className="size-3" />
+						Create a new link and revoke the old one
+					</button>
 				) : null}
 			</PopoverContent>
 		</Popover>

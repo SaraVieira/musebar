@@ -101,7 +101,10 @@ function Board() {
 		name: project.name,
 		description: project.description ?? null,
 	});
-	const [isPublic, setIsPublic] = useState(project.public);
+	const [share, setShare] = useState({
+		isPublic: project.public,
+		shareToken: project.shareToken,
+	});
 	const preDragSnapshot = useRef<{
 		nodes: Node[];
 		edges: Edge[];
@@ -392,8 +395,9 @@ function Board() {
 					</Button>
 					<ShareMenu
 						projectId={project.id}
-						isPublic={isPublic}
-						onChange={setIsPublic}
+						isPublic={share.isPublic}
+						shareToken={share.shareToken}
+						onChange={setShare}
 					/>
 					<ExportMenu projectId={project.id} projectName={meta.name} />
 					<BoardSettingsButton settings={settings} onChange={updateSettings} />
