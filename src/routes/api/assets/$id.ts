@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { eq } from "drizzle-orm";
 import { db } from "#/db";
 import { Assets, Projects } from "#/db/schema";
+import { parseRangeHeader } from "#/lib/http-range";
 import { getRequestSession } from "#/lib/session.server";
 
 function safeFilename(name: string) {
@@ -26,41 +27,80 @@ async function handler({
 	request: Request;
 	params: { id: string };
 }) {
-	// Joined so one query answers both "who owns this?" and "is its board
-	// shared?" — a public board's images have to load for anonymous viewers.
 	const [row] = await db
-		.select({ asset: Assets, isPublic: Projects.public })
+		.select({
+			id: Assets.id,
+			userId: Assets.userId,
+			name: Assets.name,
+			mimeType: Assets.mimeType,
+			size: Assets.size,
+			checksum: Assets.checksum,
+			isPublic: Projects.public,
+		})
 		.from(Assets)
 		.innerJoin(Projects, eq(Assets.projectId, Projects.id))
 		.where(eq(Assets.id, params.id))
 		.limit(1);
 
-	// 404 rather than 401 for anything the caller may not see, so the endpoint
-	// cannot be used to test whether an asset id exists.
 	if (!row) return new Response("Not found", { status: 404 });
 
 	const session = await getRequestSession(request);
-	const isOwner = session?.user.id === row.asset.userId;
+	const isOwner = session?.user.id === row.userId;
 	if (!isOwner && !row.isPublic) {
 		return new Response("Not found", { status: 404 });
 	}
 
-	const { asset } = row;
-	const bytes = new Uint8Array(asset.data as Buffer);
-	const disposition = isInlineSafeMime(asset.mimeType)
-		? "inline"
-		: "attachment";
+	const etag = `"${row.checksum ?? row.id}"`;
+	const baseHeaders: Record<string, string> = {
+		ETag: etag,
+		"Accept-Ranges": "bytes",
+		"Cache-Control": "private, max-age=31536000, immutable",
+		"X-Content-Type-Options": "nosniff",
+	};
+
+	if (request.headers.get("if-none-match") === etag) {
+		return new Response(null, { status: 304, headers: baseHeaders });
+	}
+
+	const [blobRow] = await db
+		.select({ data: Assets.data })
+		.from(Assets)
+		.where(eq(Assets.id, params.id))
+		.limit(1);
+	if (!blobRow) return new Response("Not found", { status: 404 });
+
+	const bytes = new Uint8Array(blobRow.data as Buffer);
+	const disposition = isInlineSafeMime(row.mimeType) ? "inline" : "attachment";
+	const contentHeaders = {
+		...baseHeaders,
+		"Content-Type": row.mimeType,
+		"Content-Disposition": `${disposition}; ${safeFilename(row.name)}`,
+	};
+
+	const range = parseRangeHeader(request.headers.get("range"), bytes.length);
+	if (range === "unsatisfiable") {
+		return new Response(null, {
+			status: 416,
+			headers: {
+				...contentHeaders,
+				"Content-Range": `bytes */${bytes.length}`,
+			},
+		});
+	}
+	if (range) {
+		const slice = bytes.subarray(range.start, range.end + 1);
+		return new Response(slice, {
+			status: 206,
+			headers: {
+				...contentHeaders,
+				"Content-Length": String(slice.length),
+				"Content-Range": `bytes ${range.start}-${range.end}/${bytes.length}`,
+			},
+		});
+	}
 
 	return new Response(bytes, {
-		headers: {
-			"Content-Type": asset.mimeType,
-			"Content-Length": String(asset.size),
-			// Stays `private` even when shared: a board can be un-published, and a
-			// shared cache would keep serving it afterwards.
-			"Cache-Control": "private, max-age=31536000, immutable",
-			"Content-Disposition": `${disposition}; ${safeFilename(asset.name)}`,
-			"X-Content-Type-Options": "nosniff",
-		},
+		headers: { ...contentHeaders, "Content-Length": String(bytes.length) },
 	});
 }
 

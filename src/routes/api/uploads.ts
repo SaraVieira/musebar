@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { createFileRoute } from "@tanstack/react-router";
 import { and, eq } from "drizzle-orm";
 import { db } from "#/db";
@@ -33,6 +34,21 @@ async function handler({ request }: { request: Request }) {
 	if (!project) return new Response("Project not found", { status: 404 });
 
 	const bytes = Buffer.from(await file.arrayBuffer());
+	const checksum = createHash("sha256").update(bytes).digest("hex");
+
+	const [existing] = await db
+		.select({ id: Assets.id, mimeType: Assets.mimeType })
+		.from(Assets)
+		.where(and(eq(Assets.projectId, projectId), eq(Assets.checksum, checksum)))
+		.limit(1);
+	if (existing) {
+		return Response.json({
+			id: existing.id,
+			src: `/api/assets/${existing.id}`,
+			mimeType: existing.mimeType,
+		});
+	}
+
 	const id = crypto.randomUUID();
 
 	await db.insert(Assets).values({
@@ -42,6 +58,7 @@ async function handler({ request }: { request: Request }) {
 		name: file.name || "upload",
 		mimeType: file.type,
 		size: file.size,
+		checksum,
 		data: bytes,
 	});
 

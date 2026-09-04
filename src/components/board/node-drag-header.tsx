@@ -3,22 +3,12 @@ import type { ReactNode } from "react";
 import { cn } from "#/lib/utils";
 
 interface NodeDragHeaderProps {
-	/**
-	 * The node type's drag-handle class. Each type keeps its own because the
-	 * selector is persisted in saved boards as `node.dragHandle`; unifying them
-	 * would break dragging on every board saved before the change.
-	 */
 	handleClass: string;
 	className?: string;
-	/** Rendered before the grip, so the grip can sit at either end. */
 	children?: ReactNode;
 	gripFirst?: boolean;
 }
 
-/**
- * The grab bar on nodes whose body swallows pointer events (iframes, canvases),
- * which otherwise could not be dragged at all.
- */
 export function NodeDragHeader({
 	handleClass,
 	className,

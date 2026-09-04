@@ -24,12 +24,6 @@ export function decode(s: string | undefined): string {
 		.replace(/&gt;/g, ">");
 }
 
-/**
- * Rejects a URL the server should not fetch on a user's behalf.
- *
- * Every hostname is resolved and *all* of its addresses are checked, so a name
- * that resolves to both a public and a private address is still refused.
- */
 async function assertFetchable(url: URL): Promise<void> {
 	if (!isAllowedProtocol(url)) {
 		throw new Error(`Unsupported protocol: ${url.protocol}`);
@@ -47,7 +41,6 @@ async function assertFetchable(url: URL): Promise<void> {
 	}
 }
 
-/** Reads at most MAX_BYTES, so a huge or endless body cannot exhaust memory. */
 async function readCapped(res: Response): Promise<string> {
 	const body = res.body;
 	if (!body) return "";
@@ -78,13 +71,6 @@ function isRedirect(status: number): boolean {
 	);
 }
 
-/**
- * Fetches a page as text. Returns null on any failure, including a refusal.
- *
- * Redirects are followed manually rather than by the platform, because
- * `redirect: "follow"` would let a public URL bounce the request to an
- * internal one without the destination ever being checked.
- */
 export async function fetchHtml(url: string): Promise<string | null> {
 	try {
 		let current = new URL(url);
@@ -109,8 +95,6 @@ export async function fetchHtml(url: string): Promise<string | null> {
 
 			if (!res.ok) return null;
 
-			// Nothing useful can be scraped from a non-HTML body, and refusing
-			// early avoids streaming a large binary.
 			const type = res.headers.get("content-type") ?? "";
 			if (type && !type.includes("html") && !type.includes("text")) {
 				await res.body?.cancel().catch(() => {});

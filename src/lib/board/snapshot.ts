@@ -1,4 +1,5 @@
 import type { Edge, Node } from "@xyflow/react";
+import { validateBoard } from "#/lib/board/schema";
 import {
 	type BoardSettings,
 	DEFAULT_BOARD_SETTINGS,
@@ -21,18 +22,16 @@ export function parseSnapshot(raw: string | null): BoardSnapshot {
 	try {
 		const parsed = JSON.parse(raw);
 		if (parsed && Array.isArray(parsed.nodes) && Array.isArray(parsed.edges)) {
+			const { nodes, edges } = validateBoard(parsed.nodes, parsed.edges);
 			return {
-				// A node still marked `uploading` was saved mid-upload, so its asset
-				// never landed. Restoring it would show a permanent progress bar over
-				// a file that does not exist.
-				nodes: parsed.nodes
-					.filter((n: Node) => !(n.data as { uploading?: unknown })?.uploading)
-					.map((n: Node) =>
+				nodes: nodes
+					.filter((n) => !(n.data as { uploading?: unknown })?.uploading)
+					.map((n) =>
 						n.type === "embed" && !n.dragHandle
 							? { ...n, dragHandle: ".embed-drag-handle" }
 							: n,
 					),
-				edges: parsed.edges,
+				edges,
 				settings: normalizeSettings(parsed.settings),
 			};
 		}

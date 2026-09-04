@@ -22,9 +22,6 @@ export function ShareMenu({
 }) {
 	const [busy, setBusy] = useState(false);
 	const [copied, setCopied] = useState(false);
-
-	// Built in the browser so it carries whatever host the user is actually on,
-	// rather than a value baked in at build time.
 	const shareUrl =
 		typeof window === "undefined"
 			? ""

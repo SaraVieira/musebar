@@ -63,9 +63,6 @@ import { getProject } from "#/lib/projects-server";
 import { isEditableTarget } from "#/lib/utils";
 
 export const Route = createFileRoute("/projects/$id")({
-	// Without this the match is reused across /projects/A -> /projects/B: the
-	// board state (and its undo history) would survive while project.id changed
-	// underneath it, so the next edit would save board A's content into B.
 	remountDeps: ({ params }) => params.id,
 	beforeLoad: async () => {
 		const session = await getSession();
@@ -100,9 +97,6 @@ function Board() {
 	const [paneMenu, setPaneMenu] = useState<PaneContextMenuState | null>(null);
 	const [shortcutsOpen, setShortcutsOpen] = useState(false);
 	const [editOpen, setEditOpen] = useState(false);
-	// Renaming only changes the header. Invalidating the route instead would
-	// re-run the loader and refetch this board's entire content JSON to update
-	// one string, so the metadata is kept here and updated in place.
 	const [meta, setMeta] = useState<ProjectEdits>({
 		name: project.name,
 		description: project.description ?? null,
@@ -193,7 +187,6 @@ function Board() {
 		(type: CreatableNodeType, at: { x: number; y: number }) => {
 			history.commit();
 			const node = makeCreatableNode(type, at);
-			// Frames go behind everything so they don't cover existing nodes.
 			setNodes((ns) => (type === "frame" ? [node, ...ns] : [...ns, node]));
 		},
 		[history, setNodes],
@@ -296,9 +289,6 @@ function Board() {
 			.catch(() => toast.error("Couldn't copy link"));
 	}, []);
 
-	// React Flow owns the focusable element (.react-flow__node), so Enter has to
-	// be caught here rather than inside a node view: focus sits on the ancestor
-	// and the event never reaches the node's own content div.
 	const onCanvasKeyDown = useCallback(
 		(e: React.KeyboardEvent<HTMLDivElement>) => {
 			if (e.key !== "Enter" || e.defaultPrevented) return;
@@ -330,10 +320,6 @@ function Board() {
 
 	useBoardPaste({ getCenter: boardCenter, onFiles: addFiles, onUrl: addByUrl });
 
-	// React Flow reads the accessible name from `node.ariaLabel`, so labels are
-	// attached here rather than stored on the node. Results are cached by node
-	// identity: mapping with a fresh object every render would break React
-	// Flow's per-node memoisation and re-render the whole board on any change.
 	const labelled = useRef(new WeakMap<Node, Node>());
 	const labelledNodes = useMemo(() => {
 		const cache = labelled.current;

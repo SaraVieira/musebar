@@ -1,11 +1,3 @@
-/**
- * Classifies IP addresses that server-side fetches must not reach.
- *
- * Pure and dependency-free so it can be tested exhaustively; the DNS lookup
- * that feeds it lives in `html-meta.ts`.
- */
-
-/** Unparseable input is treated as blocked — fail closed. */
 function isBlockedIpv4(ip: string): boolean {
 	const parts = ip.split(".");
 	if (parts.length !== 4) return true;
@@ -32,7 +24,6 @@ function isBlockedIpv4(ip: string): boolean {
 	return false;
 }
 
-/** `::ffff:127.0.0.1` and `::ffff:7f00:1` both have to resolve to the v4 rules. */
 function unwrapIpv4Mapped(ip: string): string | null {
 	const dotted = ip.match(/^(?:::ffff:|64:ff9b::)(\d{1,3}(?:\.\d{1,3}){3})$/);
 	if (dotted) return dotted[1];
@@ -58,10 +49,6 @@ function isBlockedIpv6(ip: string): boolean {
 	return false;
 }
 
-/**
- * True for loopback, private, link-local, CGNAT, multicast and reserved
- * addresses — anything a public metadata fetch has no business reaching.
- */
 export function isBlockedAddress(ip: string): boolean {
 	const normalized = ip.trim().toLowerCase().split("%")[0];
 	if (normalized === "") return true;
@@ -70,7 +57,6 @@ export function isBlockedAddress(ip: string): boolean {
 		: isBlockedIpv4(normalized);
 }
 
-/** Only http(s); rejects file:, ftp:, data: and friends. */
 export function isAllowedProtocol(url: URL): boolean {
 	return url.protocol === "http:" || url.protocol === "https:";
 }

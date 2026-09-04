@@ -26,10 +26,6 @@ export function ImageNodeView({
 		"loading",
 	);
 
-	// The src changes when an upload completes, so the status has to reset with
-	// it — otherwise a later image would inherit the previous one's "loaded".
-	// Adjusting during render rather than in an effect: React re-runs this
-	// component before painting, so no placeholder flash and no extra pass.
 	const [renderedSrc, setRenderedSrc] = useState(data.src);
 	if (renderedSrc !== data.src) {
 		setRenderedSrc(data.src);
@@ -64,9 +60,6 @@ export function ImageNodeView({
 							onPointerDown={(e) => e.stopPropagation()}
 							onLoad={() => setStatus("loaded")}
 							onError={() => setStatus("error")}
-							// object-contain, not cover: a moodboard should never hide part
-							// of an image. Nodes are created at the image's own aspect
-							// ratio, so this only shows when that ratio is off.
 							className="size-full rounded-lg object-contain shadow-md"
 						/>
 					) : null}

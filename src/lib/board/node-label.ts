@@ -1,14 +1,6 @@
 import type { Node } from "@xyflow/react";
 import type { BoardNodeType } from "#/lib/board/node-types";
 
-/**
- * Accessible name for a node.
- *
- * React Flow renders each node wrapper as `role="group"`, and a group takes no
- * accessible name from its contents — so without this a node announces only as
- * "node", and an image or 3D model announces nothing useful at all.
- */
-
 const TYPE_LABEL: Record<BoardNodeType, string> = {
 	note: "Note",
 	todo: "Todo list",
@@ -35,7 +27,6 @@ function truncate(value: string): string {
 		: value;
 }
 
-/** Flattens a TipTap doc to its text so a note can announce its content. */
 function textFromDoc(doc: unknown): string {
 	if (!doc || typeof doc !== "object") return "";
 	const node = doc as { text?: unknown; content?: unknown };

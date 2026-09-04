@@ -1,8 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "#/db";
-import { Projects } from "#/db/schema";
+import { Assets, Projects } from "#/db/schema";
+import { referencedAssetIds } from "#/lib/board/assets";
 import { requireServerSession } from "#/lib/session.server";
 
 export const listProjects = createServerFn({ method: "GET" }).handler(
@@ -22,6 +23,25 @@ export const listProjects = createServerFn({ method: "GET" }).handler(
 	},
 );
 
+async function collectOrphanedAssets(
+	projectId: string,
+	content: string | null,
+) {
+	try {
+		const referenced = referencedAssetIds(content);
+		const rows = await db
+			.select({ id: Assets.id })
+			.from(Assets)
+			.where(eq(Assets.projectId, projectId));
+		const orphans = rows.filter((r) => !referenced.has(r.id)).map((r) => r.id);
+		if (orphans.length > 0) {
+			await db.delete(Assets).where(inArray(Assets.id, orphans));
+		}
+	} catch {
+		// Non-fatal: a board must still open if cleanup fails.
+	}
+}
+
 export const getProject = createServerFn({ method: "GET" })
 	.validator(z.object({ id: z.string() }))
 	.handler(async ({ data }) => {
@@ -33,7 +53,9 @@ export const getProject = createServerFn({ method: "GET" })
 				and(eq(Projects.id, data.id), eq(Projects.userId, session.user.id)),
 			)
 			.limit(1);
-		return project ?? null;
+		if (!project) return null;
+		await collectOrphanedAssets(project.id, project.content);
+		return project;
 	});
 
 export const createProject = createServerFn({ method: "POST" })
@@ -82,11 +104,6 @@ export type SaveContentResult =
 	| { conflict: false; version: number }
 	| { conflict: true };
 
-/**
- * Writes board content only if the caller's `expectedVersion` still matches the
- * row. A stale version means someone else (another tab, another device) saved
- * in the meantime, so the write is refused rather than silently overwriting it.
- */
 export const updateProjectContent = createServerFn({ method: "POST" })
 	.validator(
 		z.object({
@@ -151,11 +168,6 @@ export const setProjectVisibility = createServerFn({ method: "POST" })
 		return { isPublic: data.isPublic };
 	});
 
-/**
- * Read-only board for the share link. Deliberately unauthenticated, so it
- * selects an explicit column list rather than the whole row — `userId` and
- * `version` must not leak — and returns null unless the board is public.
- */
 export const getPublicProject = createServerFn({ method: "GET" })
 	.validator(z.object({ id: z.string() }))
 	.handler(async ({ data }) => {

@@ -72,8 +72,7 @@ export function useBoard(project: Project) {
 			updateProjectContent({
 				data: {
 					id: project.id,
-					// ariaLabel is derived at render time; an undo can round-trip it
-					// back into state, so drop it rather than persist a stale copy.
+
 					content: JSON.stringify({
 						...data,
 						nodes: data.nodes.map(({ ariaLabel: _ariaLabel, ...n }) => n),

@@ -4,14 +4,6 @@ import { CREATABLE_NODES } from "#/lib/board/node-types";
 
 const DISMISSED_KEY = "musebar:board-hint-dismissed";
 
-/**
- * First-run hint for an empty board, which is otherwise a blank canvas next to
- * an icon-only rail with no indication that dropping, pasting or typing works.
- *
- * Dismissal is remembered across boards: it is an onboarding hint, not a
- * per-board note. Storage access is wrapped because it throws outright in some
- * privacy modes.
- */
 function readDismissed(): boolean {
 	try {
 		return localStorage.getItem(DISMISSED_KEY) === "1";
@@ -21,8 +13,6 @@ function readDismissed(): boolean {
 }
 
 export function BoardEmptyState() {
-	// Starts hidden so the server render and the first client render agree;
-	// the effect reveals it once localStorage can actually be read.
 	const [visible, setVisible] = useState(false);
 
 	useEffect(() => {
@@ -36,7 +26,7 @@ export function BoardEmptyState() {
 		try {
 			localStorage.setItem(DISMISSED_KEY, "1");
 		} catch {
-			// Non-fatal: the hint just reappears on the next empty board.
+			// Non-fatal: the hint reappears on the next empty board.
 		}
 	}
 

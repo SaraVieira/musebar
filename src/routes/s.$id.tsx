@@ -14,8 +14,6 @@ import { parseSnapshot } from "#/lib/board/snapshot";
 import { getPublicProject } from "#/lib/projects-server";
 
 export const Route = createFileRoute("/s/$id")({
-	// No beforeLoad: this route is intentionally public. getPublicProject
-	// returns null unless the board is actually shared.
 	loader: async ({ params }) => {
 		const project = await getPublicProject({ data: { id: params.id } });
 		if (!project) throw notFound();
@@ -56,9 +54,7 @@ function PublicBoard() {
 					Read-only
 				</span>
 			</header>
-			{/* Inputs inside nodes stay inert here: edits would not persist, so
-			    letting someone tick a checkbox would be misleading. Links keep
-			    working, and the canvas still pans and zooms. */}
+
 			<div className="board-readonly min-h-0 flex-1">
 				<ReactFlowProvider>
 					<ReactFlow

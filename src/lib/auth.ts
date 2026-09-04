@@ -14,9 +14,6 @@ async function anyUserExists() {
 
 const githubClientId = env.GITHUB_CLIENT_ID;
 const githubClientSecret = env.GITHUB_CLIENT_SECRET;
-
-// Narrowed into locals so the provider config below type-checks without
-// non-null assertions.
 const githubProvider =
 	githubClientId && githubClientSecret
 		? {
