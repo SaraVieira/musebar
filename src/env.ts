@@ -6,6 +6,12 @@ export const env = createEnv({
 		SERVER_URL: z.string().url().optional(),
 		GITHUB_CLIENT_ID: z.string().min(1).optional(),
 		GITHUB_CLIENT_SECRET: z.string().min(1).optional(),
+		/**
+		 * Opt out of SSRF protection on link and map metadata fetches, so a
+		 * self-hosted instance can bookmark things on its own network. Off by
+		 * default: with it on, any pasted URL can probe the host's LAN.
+		 */
+		ALLOW_PRIVATE_METADATA_FETCH: z.enum(["true", "1"]).optional(),
 	},
 
 	clientPrefix: "VITE_",
