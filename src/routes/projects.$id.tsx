@@ -395,7 +395,7 @@ function Board() {
 						isPublic={isPublic}
 						onChange={setIsPublic}
 					/>
-					<ExportMenu projectName={meta.name} />
+					<ExportMenu projectId={project.id} projectName={meta.name} />
 					<BoardSettingsButton settings={settings} onChange={updateSettings} />
 				</header>
 				<div className="flex min-h-0 flex-1">

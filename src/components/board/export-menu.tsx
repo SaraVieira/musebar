@@ -1,4 +1,4 @@
-import { Download, FileImage, FileType } from "lucide-react";
+import { Braces, Download, FileImage, FileType } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "#/components/ui/button";
@@ -8,15 +8,29 @@ import {
 	PopoverTrigger,
 } from "#/components/ui/popover";
 import { exportBoardAsPng, exportBoardAsSvg } from "#/lib/board/export";
+import { exportFilename } from "#/lib/board/portable";
+import { downloadJson } from "#/lib/download";
+import { exportProject } from "#/lib/projects-server";
 
-export function ExportMenu({ projectName }: { projectName: string }) {
-	const [busy, setBusy] = useState<"png" | "svg" | null>(null);
+export function ExportMenu({
+	projectId,
+	projectName,
+}: {
+	projectId: string;
+	projectName: string;
+}) {
+	const [busy, setBusy] = useState<"png" | "svg" | "json" | null>(null);
 
-	async function run(kind: "png" | "svg") {
+	async function run(kind: "png" | "svg" | "json") {
 		setBusy(kind);
 		try {
 			if (kind === "png") await exportBoardAsPng(projectName);
-			else await exportBoardAsSvg(projectName);
+			else if (kind === "svg") await exportBoardAsSvg(projectName);
+			else {
+				const board = await exportProject({ data: { id: projectId } });
+				if (!board) throw new Error("Board not found");
+				downloadJson(board, exportFilename(projectName, "json"));
+			}
 		} catch (err) {
 			toast.error("Export failed", {
 				description: err instanceof Error ? err.message : JSON.stringify(err),
@@ -63,6 +77,18 @@ export function ExportMenu({ projectName }: { projectName: string }) {
 					<FileType className="size-4" />
 					<span className="flex-1">Download as SVG</span>
 					{busy === "svg" ? (
+						<span className="text-xs opacity-60">…</span>
+					) : null}
+				</button>
+				<button
+					type="button"
+					onClick={() => run("json")}
+					disabled={busy !== null}
+					className="hover:bg-accent flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm outline-none disabled:opacity-50"
+				>
+					<Braces className="size-4" />
+					<span className="flex-1">Download as JSON</span>
+					{busy === "json" ? (
 						<span className="text-xs opacity-60">…</span>
 					) : null}
 				</button>

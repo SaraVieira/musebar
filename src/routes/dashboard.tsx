@@ -1,5 +1,5 @@
 import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
-import { LogOut, Plus } from "lucide-react";
+import { LogOut, Plus, Settings } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { CreateProjectDialog } from "#/components/dashboard/create-project-dialog";
@@ -53,10 +53,20 @@ function Dashboard() {
 				<span className="text-muted-foreground text-sm">
 					{session.user.email}
 				</span>
-				<Button variant="ghost" size="sm" onClick={signOut}>
-					<LogOut aria-hidden />
-					Log out
-				</Button>
+				<div className="flex items-center gap-1">
+					<Button
+						variant="ghost"
+						size="sm"
+						onClick={() => router.navigate({ href: "/settings" })}
+					>
+						<Settings aria-hidden />
+						Settings
+					</Button>
+					<Button variant="ghost" size="sm" onClick={signOut}>
+						<LogOut aria-hidden />
+						Log out
+					</Button>
+				</div>
 			</header>
 
 			<main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10">
