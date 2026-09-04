@@ -147,6 +147,28 @@ export const Projects = sqliteTable(
 	(table) => [uniqueIndex("projects_share_token_uidx").on(table.shareToken)],
 );
 
+/**
+ * A saved starter board. Holds a full portable payload (assets included) rather
+ * than pointing at the board it came from, so deleting that board — or letting
+ * its assets be collected — cannot hollow the template out.
+ */
+export const Templates = sqliteTable(
+	"templates",
+	{
+		id: text("id").primaryKey(),
+		name: text("name").notNull(),
+		description: text("description"),
+		payload: text("payload").notNull(),
+		userId: text("user_id")
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
+		createdAt: integer("created_at", { mode: "timestamp" }).default(
+			sql`(unixepoch())`,
+		),
+	},
+	(table) => [index("templates_userId_idx").on(table.userId)],
+);
+
 export const Assets = sqliteTable(
 	"assets",
 	{

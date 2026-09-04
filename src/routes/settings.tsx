@@ -1,5 +1,5 @@
 import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Download, Upload } from "lucide-react";
+import { ArrowLeft, Download, Trash2, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "#/components/ui/button";
@@ -10,7 +10,12 @@ import {
 	parseImport,
 } from "#/lib/board/portable";
 import { downloadJson } from "#/lib/download";
-import { exportAllProjects, importProjects } from "#/lib/projects-server";
+import {
+	deleteTemplate,
+	exportAllProjects,
+	importProjects,
+	listTemplates,
+} from "#/lib/projects-server";
 
 export const Route = createFileRoute("/settings")({
 	beforeLoad: async () => {
@@ -18,11 +23,13 @@ export const Route = createFileRoute("/settings")({
 		if (!session) throw redirect({ href: "/login" });
 		return { session };
 	},
+	loader: async () => ({ templates: await listTemplates() }),
 	component: Settings,
 });
 
 function Settings() {
 	const { session } = Route.useRouteContext();
+	const { templates } = Route.useLoaderData();
 	const router = useRouter();
 	const fileRef = useRef<HTMLInputElement>(null);
 	const [busy, setBusy] = useState<"export" | "import" | null>(null);
@@ -66,6 +73,18 @@ function Settings() {
 			});
 		} finally {
 			setBusy(null);
+		}
+	}
+
+	async function removeTemplate(id: string, name: string) {
+		try {
+			await deleteTemplate({ data: { id } });
+			await router.invalidate();
+			toast.success(`Deleted "${name}"`);
+		} catch (err) {
+			toast.error("Couldn't delete the template", {
+				description: err instanceof Error ? err.message : undefined,
+			});
 		}
 	}
 
@@ -129,6 +148,45 @@ function Settings() {
 							if (file) void importFile(file);
 						}}
 					/>
+				</section>
+
+				<section className="mt-10">
+					<h2 className="text-lg font-medium">Templates</h2>
+					<p className="text-muted-foreground mt-2 text-sm">
+						Boards you saved as starters. They appear when you create a project.
+					</p>
+
+					{templates.length === 0 ? (
+						<p className="text-muted-foreground/80 mt-4 text-sm">
+							None yet — use “Save as template” in a board's export menu.
+						</p>
+					) : (
+						<ul className="mt-4 flex flex-col gap-2">
+							{templates.map((t) => (
+								<li
+									key={t.id}
+									className="bg-card flex items-center gap-3 rounded-lg border p-3"
+								>
+									<div className="min-w-0 flex-1">
+										<div className="truncate text-sm font-medium">{t.name}</div>
+										{t.description ? (
+											<div className="text-muted-foreground truncate text-xs">
+												{t.description}
+											</div>
+										) : null}
+									</div>
+									<Button
+										variant="ghost"
+										size="icon"
+										aria-label={`Delete template ${t.name}`}
+										onClick={() => removeTemplate(t.id, t.name)}
+									>
+										<Trash2 aria-hidden className="size-4" />
+									</Button>
+								</li>
+							))}
+						</ul>
+					)}
 				</section>
 			</main>
 		</div>

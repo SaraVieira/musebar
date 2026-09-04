@@ -1,4 +1,10 @@
-import { Braces, Download, FileImage, FileType } from "lucide-react";
+import {
+	Braces,
+	Download,
+	FileImage,
+	FileType,
+	LayoutTemplate,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "#/components/ui/button";
@@ -15,9 +21,11 @@ import { exportProject } from "#/lib/projects-server";
 export function ExportMenu({
 	projectId,
 	projectName,
+	onSaveTemplate,
 }: {
 	projectId: string;
 	projectName: string;
+	onSaveTemplate: () => void;
 }) {
 	const [busy, setBusy] = useState<"png" | "svg" | "json" | null>(null);
 
@@ -91,6 +99,15 @@ export function ExportMenu({
 					{busy === "json" ? (
 						<span className="text-xs opacity-60">…</span>
 					) : null}
+				</button>
+				<div className="bg-border my-1 h-px" />
+				<button
+					type="button"
+					onClick={onSaveTemplate}
+					className="hover:bg-accent flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm outline-none"
+				>
+					<LayoutTemplate className="size-4" />
+					<span className="flex-1">Save as template</span>
 				</button>
 			</PopoverContent>
 		</Popover>

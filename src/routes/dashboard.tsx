@@ -12,6 +12,7 @@ import {
 	deleteProject,
 	duplicateProject,
 	listProjects,
+	listTemplates,
 } from "#/lib/projects-server";
 
 export const Route = createFileRoute("/dashboard")({
@@ -20,7 +21,10 @@ export const Route = createFileRoute("/dashboard")({
 		if (!session) throw redirect({ href: "/login" });
 		return { session };
 	},
-	loader: async () => ({ projects: await listProjects() }),
+	loader: async () => ({
+		projects: await listProjects(),
+		templates: await listTemplates(),
+	}),
 	component: Dashboard,
 });
 
@@ -28,7 +32,7 @@ type ProjectRow = ReturnType<typeof Route.useLoaderData>["projects"][number];
 
 function Dashboard() {
 	const { session } = Route.useRouteContext();
-	const { projects } = Route.useLoaderData();
+	const { projects, templates } = Route.useLoaderData();
 	const router = useRouter();
 	const [creating, setCreating] = useState(false);
 	const [editing, setEditing] = useState<ProjectRow | null>(null);
@@ -132,6 +136,7 @@ function Dashboard() {
 				)}
 			</main>
 			<CreateProjectDialog
+				savedTemplates={templates}
 				open={creating}
 				onOpenChange={setCreating}
 				onCreated={async (id) => {

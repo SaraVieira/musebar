@@ -64,6 +64,13 @@
       "when": 1788542825162,
       "tag": "0008_backfill_share_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1788547380186,
+      "tag": "0009_exotic_sumo",
+      "breakpoints": true
     }
   ]
 }

@@ -12,14 +12,25 @@ import {
 import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
 import { BOARD_TEMPLATES } from "#/lib/board/templates";
-import { createProject } from "#/lib/projects-server";
+import {
+	createProject,
+	createProjectFromTemplate,
+} from "#/lib/projects-server";
 import { cn } from "#/lib/utils";
 
+export interface SavedTemplate {
+	id: string;
+	name: string;
+	description: string | null;
+}
+
 export function CreateProjectDialog({
+	savedTemplates,
 	open,
 	onOpenChange,
 	onCreated,
 }: {
+	savedTemplates: SavedTemplate[];
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	onCreated: (id: string) => void | Promise<void>;
@@ -46,14 +57,25 @@ export function CreateProjectDialog({
 		if (!canSubmit) return;
 		setBusy(true);
 		try {
-			const template = BOARD_TEMPLATES.find((t) => t.key === templateKey);
-			const { id } = await createProject({
-				data: {
-					name: trimmedName,
-					description: trimmedDescription || undefined,
-					content: template?.build?.(),
-				},
-			});
+			// Saved templates carry their own files, so they go through the
+			// import path rather than being inlined as content.
+			const saved = savedTemplates.find((t) => `saved:${t.id}` === templateKey);
+			const builtIn = BOARD_TEMPLATES.find((t) => t.key === templateKey);
+			const { id } = saved
+				? await createProjectFromTemplate({
+						data: {
+							templateId: saved.id,
+							name: trimmedName,
+							description: trimmedDescription || undefined,
+						},
+					})
+				: await createProject({
+						data: {
+							name: trimmedName,
+							description: trimmedDescription || undefined,
+							content: builtIn?.build?.(),
+						},
+					});
 			await onCreated(id);
 			onOpenChange(false);
 		} catch (err) {
@@ -100,8 +122,19 @@ export function CreateProjectDialog({
 						</div>
 						<div className="flex flex-col gap-2">
 							<Label>Start from</Label>
-							<div className="grid grid-cols-2 gap-2">
-								{BOARD_TEMPLATES.map((t) => {
+							<div className="grid max-h-64 grid-cols-2 gap-2 overflow-y-auto">
+								{[
+									...BOARD_TEMPLATES.map((t) => ({
+										key: t.key,
+										name: t.name,
+										description: t.description,
+									})),
+									...savedTemplates.map((t) => ({
+										key: `saved:${t.id}`,
+										name: t.name,
+										description: t.description ?? "Saved template",
+									})),
+								].map((t) => {
 									const selected = t.key === templateKey;
 									return (
 										<button

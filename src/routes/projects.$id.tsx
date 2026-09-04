@@ -32,6 +32,7 @@ import {
 	PaneContextMenu,
 	type PaneContextMenuState,
 } from "#/components/board/pane-context-menu";
+import { SaveTemplateDialog } from "#/components/board/save-template-dialog";
 import { ShareMenu } from "#/components/board/share-menu";
 import { ShortcutsDialog } from "#/components/board/shortcuts-dialog";
 import { UrlDialog } from "#/components/board/url-dialog";
@@ -97,6 +98,7 @@ function Board() {
 	const [paneMenu, setPaneMenu] = useState<PaneContextMenuState | null>(null);
 	const [shortcutsOpen, setShortcutsOpen] = useState(false);
 	const [editOpen, setEditOpen] = useState(false);
+	const [templateOpen, setTemplateOpen] = useState(false);
 	const [meta, setMeta] = useState<ProjectEdits>({
 		name: project.name,
 		description: project.description ?? null,
@@ -399,7 +401,11 @@ function Board() {
 						shareToken={share.shareToken}
 						onChange={setShare}
 					/>
-					<ExportMenu projectId={project.id} projectName={meta.name} />
+					<ExportMenu
+						projectId={project.id}
+						projectName={meta.name}
+						onSaveTemplate={() => setTemplateOpen(true)}
+					/>
 					<BoardSettingsButton settings={settings} onChange={updateSettings} />
 				</header>
 				<div className="flex min-h-0 flex-1">
@@ -494,6 +500,12 @@ function Board() {
 					/>
 				) : null}
 				<ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+				<SaveTemplateDialog
+					projectId={project.id}
+					projectName={meta.name}
+					open={templateOpen}
+					onOpenChange={setTemplateOpen}
+				/>
 				<EditProjectDialog
 					project={{ id: project.id, ...meta }}
 					open={editOpen}

@@ -3,7 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "#/db";
-import { Assets, Projects } from "#/db/schema";
+import { Assets, Projects, Templates } from "#/db/schema";
 import { referencedAssetIds } from "#/lib/board/assets";
 import {
 	PORTABLE_ARCHIVE_FORMAT,
@@ -11,6 +11,7 @@ import {
 	PORTABLE_VERSION,
 	type PortableArchive,
 	type PortableBoard,
+	parseImport,
 	portableBoardSchema,
 	rewriteAssetReferences,
 } from "#/lib/board/portable";
@@ -407,4 +408,106 @@ export const importProjects = createServerFn({ method: "POST" })
 		}
 
 		return { created };
+	});
+
+/** Saves a board's current state as a reusable starter. */
+export const saveBoardAsTemplate = createServerFn({ method: "POST" })
+	.validator(
+		z.object({
+			projectId: z.string(),
+			name: z.string().min(1).max(120),
+			description: z.string().max(500).optional(),
+		}),
+	)
+	.handler(async ({ data }) => {
+		const session = await requireServerSession();
+		const [project] = await db
+			.select()
+			.from(Projects)
+			.where(
+				and(
+					eq(Projects.id, data.projectId),
+					eq(Projects.userId, session.user.id),
+				),
+			)
+			.limit(1);
+		if (!project) throw new Error("Board not found.");
+
+		const id = crypto.randomUUID();
+		await db.insert(Templates).values({
+			id,
+			name: data.name,
+			description: data.description ?? null,
+			payload: JSON.stringify(await toPortableBoard(project)),
+			userId: session.user.id,
+		});
+		return { id, name: data.name };
+	});
+
+/** Payloads are excluded: they carry the assets and can be megabytes. */
+export const listTemplates = createServerFn({ method: "GET" }).handler(
+	async () => {
+		const session = await requireServerSession();
+		return db
+			.select({
+				id: Templates.id,
+				name: Templates.name,
+				description: Templates.description,
+				createdAt: Templates.createdAt,
+			})
+			.from(Templates)
+			.where(eq(Templates.userId, session.user.id))
+			.orderBy(desc(Templates.createdAt));
+	},
+);
+
+export const deleteTemplate = createServerFn({ method: "POST" })
+	.validator(z.object({ id: z.string() }))
+	.handler(async ({ data }) => {
+		const session = await requireServerSession();
+		await db
+			.delete(Templates)
+			.where(
+				and(eq(Templates.id, data.id), eq(Templates.userId, session.user.id)),
+			);
+	});
+
+export const createProjectFromTemplate = createServerFn({ method: "POST" })
+	.validator(
+		z.object({
+			templateId: z.string(),
+			name: z.string().min(1).max(120),
+			description: z.string().max(500).optional(),
+		}),
+	)
+	.handler(async ({ data }) => {
+		const session = await requireServerSession();
+		const [template] = await db
+			.select()
+			.from(Templates)
+			.where(
+				and(
+					eq(Templates.id, data.templateId),
+					eq(Templates.userId, session.user.id),
+				),
+			)
+			.limit(1);
+		if (!template) throw new Error("Template not found.");
+
+		const parsed = parseImport(JSON.parse(template.payload));
+		if (!parsed.ok) throw new Error(parsed.error);
+		const board = parsed.boards[0];
+
+		return createBoardWithAssets({
+			userId: session.user.id,
+			name: data.name,
+			description: data.description ?? null,
+			content: board.content,
+			assets: board.assets.map((a) => ({
+				id: a.id,
+				name: a.name,
+				mimeType: a.mimeType,
+				bytes: Buffer.from(a.data, "base64"),
+			})),
+		});
 	});
