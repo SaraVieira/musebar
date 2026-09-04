@@ -11,7 +11,9 @@ import {
 } from "#/components/ui/dialog";
 import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
+import { BOARD_TEMPLATES } from "#/lib/board/templates";
 import { createProject } from "#/lib/projects-server";
+import { cn } from "#/lib/utils";
 
 export function CreateProjectDialog({
 	open,
@@ -25,11 +27,13 @@ export function CreateProjectDialog({
 	const [name, setName] = useState("");
 	const [description, setDescription] = useState("");
 	const [busy, setBusy] = useState(false);
+	const [templateKey, setTemplateKey] = useState(BOARD_TEMPLATES[0].key);
 
 	useEffect(() => {
 		if (open) {
 			setName("");
 			setDescription("");
+			setTemplateKey(BOARD_TEMPLATES[0].key);
 		}
 	}, [open]);
 
@@ -42,10 +46,12 @@ export function CreateProjectDialog({
 		if (!canSubmit) return;
 		setBusy(true);
 		try {
+			const template = BOARD_TEMPLATES.find((t) => t.key === templateKey);
 			const { id } = await createProject({
 				data: {
 					name: trimmedName,
 					description: trimmedDescription || undefined,
+					content: template?.build?.(),
 				},
 			});
 			await onCreated(id);
@@ -91,6 +97,33 @@ export function CreateProjectDialog({
 								placeholder="Optional"
 								maxLength={500}
 							/>
+						</div>
+						<div className="flex flex-col gap-2">
+							<Label>Start from</Label>
+							<div className="grid grid-cols-2 gap-2">
+								{BOARD_TEMPLATES.map((t) => {
+									const selected = t.key === templateKey;
+									return (
+										<button
+											key={t.key}
+											type="button"
+											onClick={() => setTemplateKey(t.key)}
+											aria-pressed={selected}
+											className={cn(
+												"rounded-lg border p-3 text-left transition-colors",
+												selected
+													? "border-foreground/40 bg-accent"
+													: "hover:bg-accent/50",
+											)}
+										>
+											<div className="text-sm font-medium">{t.name}</div>
+											<div className="text-muted-foreground mt-0.5 text-xs">
+												{t.description}
+											</div>
+										</button>
+									);
+								})}
+							</div>
 						</div>
 					</div>
 					<DialogFooter className="mt-6">

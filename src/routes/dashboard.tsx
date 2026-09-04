@@ -8,7 +8,11 @@ import { ProjectCard } from "#/components/dashboard/project-card";
 import { Button } from "#/components/ui/button";
 import { authClient } from "#/lib/auth-client";
 import { getSession } from "#/lib/auth-server";
-import { deleteProject, listProjects } from "#/lib/projects-server";
+import {
+	deleteProject,
+	duplicateProject,
+	listProjects,
+} from "#/lib/projects-server";
 
 export const Route = createFileRoute("/dashboard")({
 	beforeLoad: async () => {
@@ -33,6 +37,18 @@ function Dashboard() {
 		await authClient.signOut();
 		await router.invalidate();
 		router.navigate({ href: "/login" });
+	}
+
+	async function onDuplicate(id: string) {
+		try {
+			const copy = await duplicateProject({ data: { id } });
+			await router.invalidate();
+			toast.success(`Created "${copy.name}"`);
+		} catch (err) {
+			toast.error("Couldn't duplicate the project", {
+				description: err instanceof Error ? err.message : undefined,
+			});
+		}
 	}
 
 	async function onDelete(id: string, name: string) {
@@ -108,6 +124,7 @@ function Dashboard() {
 								key={p.id}
 								project={p}
 								onEdit={() => setEditing(p)}
+								onDuplicate={() => onDuplicate(p.id)}
 								onDelete={() => onDelete(p.id, p.name)}
 							/>
 						))}

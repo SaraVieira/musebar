@@ -73,6 +73,8 @@ export const createProject = createServerFn({ method: "POST" })
 		z.object({
 			name: z.string().min(1).max(120),
 			description: z.string().max(500).optional(),
+			/** Serialised board content, when starting from a template. */
+			content: z.string().optional(),
 		}),
 	)
 	.handler(async ({ data }) => {
@@ -82,7 +84,7 @@ export const createProject = createServerFn({ method: "POST" })
 			id,
 			name: data.name,
 			description: data.description ?? null,
-			content: null,
+			content: data.content ?? null,
 			userId: session.user.id,
 		});
 		return { id };
@@ -296,6 +298,91 @@ export const exportAllProjects = createServerFn({ method: "GET" }).handler(
  * the board content is rewritten to match, so an import never points at another
  * project's rows.
  */
+
+/**
+ * Creates a board owned by `userId` with a private copy of `assets`, rewriting
+ * the content's asset URLs to the new ids. Shared by import and duplicate.
+ *
+ * The project row is written first because `Assets.projectId` is a foreign key,
+ * then updated with the rewritten content once the new ids are known. `public`
+ * and `shareToken` are never carried over: a copy must not inherit a live link.
+ */
+async function createBoardWithAssets(input: {
+	userId: string;
+	name: string;
+	description: string | null;
+	content: string;
+	thumbnail?: string | null;
+	assets: Array<{ id: string; name: string; mimeType: string; bytes: Buffer }>;
+}) {
+	const projectId = crypto.randomUUID();
+	await db.insert(Projects).values({
+		id: projectId,
+		name: input.name,
+		description: input.description,
+		thumbnail: input.thumbnail ?? null,
+		content: null,
+		userId: input.userId,
+	});
+
+	const idMap = new Map<string, string>();
+	for (const asset of input.assets) {
+		const newId = crypto.randomUUID();
+		idMap.set(asset.id, newId);
+		await db.insert(Assets).values({
+			id: newId,
+			projectId,
+			userId: input.userId,
+			name: asset.name,
+			mimeType: asset.mimeType,
+			size: asset.bytes.length,
+			checksum: createHash("sha256").update(asset.bytes).digest("hex"),
+			data: asset.bytes,
+		});
+	}
+
+	await db
+		.update(Projects)
+		.set({ content: rewriteAssetReferences(input.content, idMap) })
+		.where(eq(Projects.id, projectId));
+
+	return { id: projectId, name: input.name };
+}
+
+/** Copies a board, its files and its layout into a new private board. */
+export const duplicateProject = createServerFn({ method: "POST" })
+	.validator(z.object({ id: z.string() }))
+	.handler(async ({ data }) => {
+		const session = await requireServerSession();
+		const [source] = await db
+			.select()
+			.from(Projects)
+			.where(
+				and(eq(Projects.id, data.id), eq(Projects.userId, session.user.id)),
+			)
+			.limit(1);
+		if (!source) throw new Error("Board not found.");
+
+		const assets = await db
+			.select()
+			.from(Assets)
+			.where(eq(Assets.projectId, source.id));
+
+		return createBoardWithAssets({
+			userId: session.user.id,
+			name: `${source.name} (copy)`.slice(0, 120),
+			description: source.description,
+			content: source.content ?? '{"nodes":[],"edges":[]}',
+			thumbnail: source.thumbnail,
+			assets: assets.map((a) => ({
+				id: a.id,
+				name: a.name,
+				mimeType: a.mimeType,
+				bytes: Buffer.from(a.data as Buffer),
+			})),
+		});
+	});
+
 export const importProjects = createServerFn({ method: "POST" })
 	.validator(z.object({ boards: z.array(portableBoardSchema) }))
 	.handler(async ({ data }) => {
@@ -303,40 +390,20 @@ export const importProjects = createServerFn({ method: "POST" })
 		const created: Array<{ id: string; name: string }> = [];
 
 		for (const board of data.boards) {
-			const projectId = crypto.randomUUID();
-			const idMap = new Map<string, string>();
-
-			// Project first: Assets.projectId is a foreign key, so inserting an
-			// asset before its project fails the constraint.
-			await db.insert(Projects).values({
-				id: projectId,
-				name: board.name,
-				description: board.description ?? null,
-				content: null,
-				userId: session.user.id,
-			});
-
-			for (const asset of board.assets) {
-				const newId = crypto.randomUUID();
-				idMap.set(asset.id, newId);
-				const bytes = Buffer.from(asset.data, "base64");
-				await db.insert(Assets).values({
-					id: newId,
-					projectId,
+			created.push(
+				await createBoardWithAssets({
 					userId: session.user.id,
-					name: asset.name,
-					mimeType: asset.mimeType,
-					size: bytes.length,
-					checksum: createHash("sha256").update(bytes).digest("hex"),
-					data: bytes,
-				});
-			}
-
-			await db
-				.update(Projects)
-				.set({ content: rewriteAssetReferences(board.content, idMap) })
-				.where(eq(Projects.id, projectId));
-			created.push({ id: projectId, name: board.name });
+					name: board.name,
+					description: board.description ?? null,
+					content: board.content,
+					assets: board.assets.map((a) => ({
+						id: a.id,
+						name: a.name,
+						mimeType: a.mimeType,
+						bytes: Buffer.from(a.data, "base64"),
+					})),
+				}),
+			);
 		}
 
 		return { created };

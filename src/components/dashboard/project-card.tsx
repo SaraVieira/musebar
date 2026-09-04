@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Pencil } from "lucide-react";
+import { Copy, Pencil } from "lucide-react";
 import { RELATIVE_UNITS } from "#/lib/constants";
 import type { Route } from "#/routes/dashboard";
 import { Button } from "../ui/button";
@@ -21,10 +21,12 @@ function formatRelative(date: Date | null): string {
 export function ProjectCard({
 	project,
 	onEdit,
+	onDuplicate,
 	onDelete,
 }: {
 	project: ReturnType<typeof Route.useLoaderData>["projects"][number];
 	onEdit: () => void;
+	onDuplicate: () => void | Promise<void>;
 	onDelete: () => void | Promise<void>;
 }) {
 	return (
@@ -62,6 +64,19 @@ export function ProjectCard({
 					}}
 				>
 					<Pencil aria-hidden className="h-3.5 w-3.5" />
+				</Button>
+				<Button
+					variant="secondary"
+					size="icon"
+					aria-label={`Duplicate ${project.name}`}
+					className="h-8 w-8 shadow-sm"
+					onClick={(e) => {
+						e.preventDefault();
+						e.stopPropagation();
+						void onDuplicate();
+					}}
+				>
+					<Copy aria-hidden className="h-3.5 w-3.5" />
 				</Button>
 				<DeleteProject name={project.name} onConfirm={onDelete} />
 			</div>
