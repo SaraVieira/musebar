@@ -203,3 +203,15 @@
     outline: 2px solid var(--ring);
     outline-offset: 2px;
 }
+
+/*
+ * Shared boards are read-only. Node bodies still scroll and links still work,
+ * but form controls are inert: an edit here would never persist, so accepting
+ * one would be a lie.
+ */
+.board-readonly .react-flow__node input,
+.board-readonly .react-flow__node textarea,
+.board-readonly .react-flow__node button,
+.board-readonly .react-flow__node [contenteditable] {
+    pointer-events: none;
+}

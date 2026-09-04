@@ -136,3 +136,39 @@ export const deleteProject = createServerFn({ method: "POST" })
 				and(eq(Projects.id, data.id), eq(Projects.userId, session.user.id)),
 			);
 	});
+
+/** Owner-only toggle for whether a board is reachable via its share link. */
+export const setProjectVisibility = createServerFn({ method: "POST" })
+	.validator(z.object({ id: z.string(), isPublic: z.boolean() }))
+	.handler(async ({ data }) => {
+		const session = await requireServerSession();
+		await db
+			.update(Projects)
+			.set({ public: data.isPublic, updatedAt: new Date() })
+			.where(
+				and(eq(Projects.id, data.id), eq(Projects.userId, session.user.id)),
+			);
+		return { isPublic: data.isPublic };
+	});
+
+/**
+ * Read-only board for the share link. Deliberately unauthenticated, so it
+ * selects an explicit column list rather than the whole row — `userId` and
+ * `version` must not leak — and returns null unless the board is public.
+ */
+export const getPublicProject = createServerFn({ method: "GET" })
+	.validator(z.object({ id: z.string() }))
+	.handler(async ({ data }) => {
+		const [project] = await db
+			.select({
+				id: Projects.id,
+				name: Projects.name,
+				description: Projects.description,
+				content: Projects.content,
+				updatedAt: Projects.updatedAt,
+			})
+			.from(Projects)
+			.where(and(eq(Projects.id, data.id), eq(Projects.public, true)))
+			.limit(1);
+		return project ?? null;
+	});

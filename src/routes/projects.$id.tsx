@@ -32,6 +32,7 @@ import {
 	PaneContextMenu,
 	type PaneContextMenuState,
 } from "#/components/board/pane-context-menu";
+import { ShareMenu } from "#/components/board/share-menu";
 import { ShortcutsDialog } from "#/components/board/shortcuts-dialog";
 import { UrlDialog } from "#/components/board/url-dialog";
 import {
@@ -106,6 +107,7 @@ function Board() {
 		name: project.name,
 		description: project.description ?? null,
 	});
+	const [isPublic, setIsPublic] = useState(project.public);
 	const preDragSnapshot = useRef<{
 		nodes: Node[];
 		edges: Edge[];
@@ -402,6 +404,11 @@ function Board() {
 					>
 						<Keyboard aria-hidden />
 					</Button>
+					<ShareMenu
+						projectId={project.id}
+						isPublic={isPublic}
+						onChange={setIsPublic}
+					/>
 					<ExportMenu projectName={meta.name} />
 					<BoardSettingsButton settings={settings} onChange={updateSettings} />
 				</header>
